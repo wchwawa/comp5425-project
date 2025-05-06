@@ -5,7 +5,7 @@
 		"build": "next build",
 		"start": "next start",
 		"script": "tsx -r tsconfig-paths/register",
-		"test": "dotenv -e .env.local tsx script/test.ts",
+		"test": "dotenv -e .env.local tsx $1",
 		"supabase:generate-types": "npx supabase gen types typescript --project-id axhdensnekzntodldenv > types/supabase.ts"
 	},
 	"dependencies": {
