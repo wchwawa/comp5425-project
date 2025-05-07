@@ -11,6 +11,10 @@ export default async function Home() {
         <h2 className="font-medium text-xl mb-4">Next steps</h2>
         {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
       </main>
+
+      <button onClick={() => {
+        console.log("clicked");
+      }}>Click me</button>
     </>
   );
 }
