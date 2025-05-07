@@ -42,3 +42,4 @@ next-env.d.ts
 venv/*
 test.json
 pod.json
+test.log
