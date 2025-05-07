@@ -11,8 +11,8 @@ export type Database = {
     Tables: {
       documents: {
         Row: {
-          body: string | null
           chunk_index: number | null
+          content: string | null
           created_at: string | null
           embedding: string | null
           id: string
@@ -24,8 +24,8 @@ export type Database = {
           title: string | null
         }
         Insert: {
-          body?: string | null
           chunk_index?: number | null
+          content?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: string
@@ -37,8 +37,8 @@ export type Database = {
           title?: string | null
         }
         Update: {
-          body?: string | null
           chunk_index?: number | null
+          content?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: string
@@ -113,31 +113,13 @@ export type Database = {
         Returns: unknown
       }
       match_documents: {
-        Args:
-          | { query_embedding: string; match_count?: number; filter?: Json }
-          | {
-              query_embedding: string
-              match_count?: number
-              filter_source_type?: string
-              filter_tag?: string
-            }
-          | {
-              query_embedding: string
-              match_count?: number
-              filter_source_type?: string
-              filter_tag?: string
-              created_after?: string
-              created_before?: string
-            }
+        Args: { query_embedding: string; match_count?: number; filter?: Json }
         Returns: {
           id: string
           title: string
-          body: string
-          source_type: string
-          source_url: string
-          tags: string[]
+          content: string
+          metadata: Json
           similarity: number
-          raw_data: Json
         }[]
       }
       sparsevec_out: {

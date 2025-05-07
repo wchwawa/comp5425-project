@@ -27,6 +27,18 @@ const vectorStore = new SupabaseVectorStore(embeddings, {
 
 /**
  * add docs to vector store
+ * @param docs - array of documents is an array of objects with the following properties:
+ * {
+ *   content: string,
+ *   title?: string,
+ *   source_url?: string,
+ *   source_type?: string,
+ *   tags?: string[],
+ *   raw_data?: any,
+ *   description?: string
+ * }
+ * @description - this fuction will send the docs to supabase vector store, 
+ * embeding the content to emebdding column, and the wrap rest of the fields to json and save to metadata column.
  */
 export async function addDocuments(docs: Array<{
   content: string,
@@ -34,7 +46,9 @@ export async function addDocuments(docs: Array<{
   source_url?: string,
   source_type?: string,
   tags?: string[],
-  raw_data?: any
+  raw_data?: any,
+  description?: string,
+  
 }>) {
   const documents = docs.map((doc, index) => 
     new Document({
@@ -43,6 +57,7 @@ export async function addDocuments(docs: Array<{
         title: doc.title || '',
         source_url: doc.source_url || '',
         source_type: doc.source_type || '',
+        description: doc.description || '',
         tags: doc.tags || [],
         chunk_index: index,
         raw_data: doc.raw_data || null
@@ -59,7 +74,7 @@ export async function addDocuments(docs: Array<{
  */
 export async function RAG(query: string, options = { limit: 3, tags: undefined as string[] | undefined }) {
   // build filter
-  const filter = options.tags?.length ? { metadata: { tags: { $containsAny: options.tags } } } : undefined;
+  const filter = options.tags?.length ? { tags: options.tags } : undefined;
   
   // retrieve related docs
   const docs = await vectorStore.similaritySearch(query, options.limit, filter);
@@ -72,13 +87,13 @@ export async function RAG(query: string, options = { limit: 3, tags: undefined a
   
   return {
     context,
-    sources: docs.map(doc => ({
+    metadata: docs.map(doc => ({
       title: doc.metadata.title,
+      description: doc.metadata.description,
       content: doc.pageContent,
-      similarity: doc.metadata.similarity,
       source_url: doc.metadata.source_url,
       source_type: doc.metadata.source_type,
-      tags: doc.metadata.tags
+      tags: doc.metadata.tags,
     }))
   };
 }
@@ -89,7 +104,7 @@ export async function RAG(query: string, options = { limit: 3, tags: undefined a
  */
 export async function queryRAG(query: string, options = { limit: 3, tags: undefined as string[] | undefined }) {
   // build filter
-  const filter = options.tags?.length ? { metadata: { tags: { $containsAny: options.tags } } } : undefined;
+  const filter = options.tags?.length ? { tags: options.tags } : undefined;
   
   // retrieve related docs
   const docs = await vectorStore.similaritySearch(query, options.limit, filter);
@@ -115,7 +130,7 @@ export async function queryRAG(query: string, options = { limit: 3, tags: undefi
   
   return {
     answer: response.content,
-    sources: docs.map(doc => ({
+    metadata: docs.map(doc => ({
       title: doc.metadata.title,
       content: doc.pageContent,
       source_url: doc.metadata.source_url,
