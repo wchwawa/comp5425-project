@@ -266,43 +266,72 @@ async function getPodcastRssUrl(podcastName: string): Promise<string | null> {
   }
 }
 
+/**
+ * Fetches, transcribes, and returns a specified number of podcast episodes from an RSS feed.
+ *
+ * @param rssFeedUrl The URL of the podcast's RSS feed.
+ * @param count The number of latest episodes to transcribe (defaults to 5).
+ * @returns A promise that resolves to an array of transcribed episode data objects.
+ */
+export async function getTranscribedPodcastEpisodes(rssFeedUrl: string, count: number = 5): Promise<EpisodeData[]> {
+  const openai = new OpenAI(); // Initialize OpenAI client
+  console.log(`Fetching episodes from RSS feed: ${rssFeedUrl}`);
+  const allEpisodes = await fetchPodcastEpisodes(rssFeedUrl);
+
+  if (!allEpisodes || allEpisodes.length === 0) {
+    console.log("No episodes found or failed to fetch episodes from the RSS feed.");
+    return [];
+  }
+
+  console.log(`Fetched ${allEpisodes.length} total episodes. Processing the latest ${Math.min(count, allEpisodes.length)}.`);
+  const episodesToTranscribe = allEpisodes.slice(0, Math.min(count, allEpisodes.length));
+  const transcribedEpisodes: EpisodeData[] = [];
+
+  for (const episode of episodesToTranscribe) {
+    let transcriptionText: string | null = 'No audio URL or transcription not attempted.';
+    if (episode.audio_url) {
+      console.log(`
+Transcribing Episode: ${episode.title || 'N/A'} from ${episode.audio_url}`);
+      transcriptionText = await transcribeAudio(episode.audio_url, openai);
+      episode.transcription = transcriptionText || 'Transcription failed or N/A';
+    } else {
+      console.log(`Skipping transcription for Episode: ${episode.title || 'N/A'} (no audio URL)`);
+      episode.transcription = 'No audio URL provided.';
+    }
+    transcribedEpisodes.push(episode);
+  }
+
+  return transcribedEpisodes;
+}
+
 // --- Example Usage ---
 async function main() {
-  const podcastNameToSearch = "The Daily";
+  const podcastNameToSearch = "The Daily"; // Example podcast
+  const numberOfEpisodesToGet = 5; // Number of episodes to fetch and transcribe
+
   const rssFeedUrl = await getPodcastRssUrl(podcastNameToSearch);
 
   if (rssFeedUrl) {
     console.log(`Found RSS feed for '${podcastNameToSearch}': ${rssFeedUrl}`);
-    const openai = new OpenAI(); // Initialize OpenAI client
+    const transcribedEpisodes = await getTranscribedPodcastEpisodes(rssFeedUrl, numberOfEpisodesToGet);
 
-    const podcastEpisodes = await fetchPodcastEpisodes(rssFeedUrl);
-
-    if (podcastEpisodes.length > 0) {
-      console.log(`\n--- Episodes for ${podcastNameToSearch} (Attempting to transcribe first episode) ---`);
-      // Let's transcribe only the first episode for this example to avoid long processing times
-      const episodeToTranscribe = podcastEpisodes[0];
-
-      if (episodeToTranscribe && episodeToTranscribe.audio_url) {
-        console.log(`\nTranscribing Episode: ${episodeToTranscribe.title || 'N/A'}`);
-        const transcriptionText = await transcribeAudio(episodeToTranscribe.audio_url, openai);
-        episodeToTranscribe.transcription = transcriptionText || 'Transcription failed or N/A';
-
-        console.log(`\nEpisode 1:`);
-        console.log(`  Title: ${episodeToTranscribe.title || 'N/A'}`);
-        console.log(`  Published: ${episodeToTranscribe.published || 'N/A'}`);
-        console.log(`  Summary: ${(episodeToTranscribe.summary || 'N/A').substring(0, 150)}...`);
-        console.log(`  Audio URL: ${episodeToTranscribe.audio_url || 'N/A'}`);
-        console.log(`  Transcription: ${episodeToTranscribe.transcription}...`); // Display first 200 chars
-      } else {
-        console.log("First episode does not have an audio URL or does not exist.");
-      }
-
-
+    if (transcribedEpisodes.length > 0) {
+      console.log(`
+--- Transcribed Episodes for ${podcastNameToSearch} (First ${transcribedEpisodes.length}) ---`);
+      transcribedEpisodes.forEach((episode, index) => {
+        console.log(`
+Episode ${index + 1}:`);
+        console.log(`  Title: ${episode.title || 'N/A'}`);
+        console.log(`  Published: ${episode.published || 'N/A'}`);
+        console.log(`  Summary: ${(episode.summary || 'N/A').substring(0, 150)}...`);
+        console.log(`  Audio URL: ${episode.audio_url || 'N/A'}`);
+        console.log(`  Transcription: ${episode.transcription ? episode.transcription.substring(0, 200) : 'N/A'}...`);
+      });
     } else {
-      console.log("Could not fetch or parse podcast episodes.");
+      console.log(`Could not transcribe any episodes for ${podcastNameToSearch}.`);
     }
   } else {
-    console.log("Could not find RSS feed URL.");
+    console.log(`Could not find RSS feed URL for '${podcastNameToSearch}'.`);
   }
 }
 
