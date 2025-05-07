@@ -267,6 +267,8 @@ async function getPodcastRssUrl(podcastName: string): Promise<string | null> {
 }
 
 /**
+ * TODO 
+ * Link to VectorDB to avoid duplicate record
  * Fetches, transcribes, and returns a specified number of podcast episodes from an RSS feed.
  *
  * @param rssFeedUrl The URL of the podcast's RSS feed.
