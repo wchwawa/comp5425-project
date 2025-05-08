@@ -1,5 +1,4 @@
 
-```markdown
 # Project Setup Guide
 
 ## Prerequisites
