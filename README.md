@@ -1,20 +1,51 @@
-**Prerequisites**
-run `npm install` after pull
 
-**ENV**
-see .env.example
-- use our own llm api key, better not to share cuz it will be banned if accidentally published
-- find supabase security in its dashboard
+```markdown
+# Project Setup Guide
 
-**script 跑测试**
--run: npm run script <script-path>
--write you own test file in ./script
+## Prerequisites
 
-**run server**
+After cloning the repo, install dependencies:
+
+```bash
+npm install
+```
+
+## Environment Variables
+
+See `.env.example` for reference:
+
+- **LLM API Key**: Use your own API key. Do not share it - public exposure may lead to the key being banned
+- **Supabase Credentials**: Retrieve from the Supabase dashboard
+
+## Running Scripts (for Testing)
+
+You can run custom scripts using:
+
+```bash
+npm run script <script-path>
+```
+
+Write your test files in the `./script` directory.
+
+## Running the Development Server
+
+```bash
 npm run dev
+```
 
-**db and tables**
-see types/supabase.ts, if you just updated the db schema, run `npm run supabase:generate-types` to update the types
+## Database and Types
 
-**tech stack**
-langchain + supabase pg vector + gpt4.1(or gpt-4o) + openai-embedding-3-small (1536)
+- Check `types/supabase.ts` for current schema types
+- After making changes to the database schema, regenerate types with:
+
+```bash
+npm run supabase:generate-types
+```
+
+## Tech Stack
+
+- LangChain
+- Supabase PG Vector
+- GPT-4.1 or GPT-4o
+- openai-embedding-3-small (1536 dimensions)
+```
