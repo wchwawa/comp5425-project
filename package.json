@@ -9,6 +9,8 @@
 		"supabase:generate-types": "npx supabase gen types typescript --project-id axhdensnekzntodldenv > types/supabase.ts"
 	},
 	"dependencies": {
+		"@google-cloud/speech": "^7.0.1",
+		"@google-cloud/storage": "^7.16.0",
 		"@langchain/community": "^0.3.42",
 		"@langchain/openai": "^0.5.10",
 		"@radix-ui/react-checkbox": "^1.1.1",
@@ -20,6 +22,7 @@
 		"autoprefixer": "10.4.20",
 		"class-variance-authority": "^0.7.0",
 		"clsx": "^2.1.1",
+		"dotenv": "^16.5.0",
 		"fs-extra": "^11.3.0",
 		"langchain": "^0.3.24",
 		"lucide-react": "^0.468.0",
@@ -33,6 +36,7 @@
 		"rss-parser": "^3.13.0"
 	},
 	"devDependencies": {
+		"@types/dotenv": "^6.1.1",
 		"@types/fs-extra": "^11.0.4",
 		"@types/node": "22.10.2",
 		"@types/node-fetch": "^2.6.12",

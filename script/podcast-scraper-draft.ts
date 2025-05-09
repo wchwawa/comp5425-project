@@ -94,8 +94,12 @@ async function fetchPodcastEpisodes(rssUrl: string): Promise<EpisodeData[]> {
 async function compressAudio(inputPath: string, outputPath: string, tempo: number, bitrate: string): Promise<boolean> {
   const ffmpegCommand = `ffmpeg -y -i "${inputPath}" -filter:a "atempo=${tempo}" -b:a ${bitrate} "${outputPath}"`;
   console.log(`Attempting to compress audio with command: ${ffmpegCommand}`);
+  const startTime = Date.now();
   try {
     const { stdout, stderr } = await execAsync(ffmpegCommand);
+    const duration = (Date.now() - startTime) / 1000; // Duration in seconds
+    console.log(`Audio compression attempt took ${duration} seconds.`);
+
     if (stderr && !stderr.includes('Output file #0 does not contain any stream')) { // ffmpeg can output to stderr on success
       // Check for known "success" messages or patterns in stderr if necessary
       // For now, we'll consider stderr content (not matching specific non-errors) as a potential issue
@@ -116,7 +120,8 @@ async function compressAudio(inputPath: string, outputPath: string, tempo: numbe
       return false;
     }
   } catch (error) {
-    console.error('Error during ffmpeg compression:', error);
+    const duration = (Date.now() - startTime) / 1000; // Duration in seconds
+    console.error(`Error during ffmpeg compression (took ${duration} seconds):`, error);
     return false;
   }
 }
@@ -196,12 +201,14 @@ async function transcribeAudio(audioUrl: string, openai: OpenAI): Promise<string
     }
 
     console.log(`Starting transcription for ${fileToTranscribe}...`);
+    const transcriptionStartTime = Date.now();
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream(fileToTranscribe),
       model: "whisper-1",
       response_format: "text",
     });
-    console.log("Transcription finished.");
+    const transcriptionDuration = (Date.now() - transcriptionStartTime) / 1000; // Duration in seconds
+    console.log(`Transcription finished. Took ${transcriptionDuration} seconds.`);
 
     return transcription as unknown as string;
 
@@ -242,6 +249,7 @@ async function getPodcastRssUrl(podcastName: string): Promise<string | null> {
   try {
     const searchTerm = encodeURIComponent(podcastName);
     const searchUrl = `https://itunes.apple.com/search?term=${searchTerm}&entity=podcast&limit=1`;
+    console.log(`Searching for podcast: ${searchUrl}`);
     const response = await fetch(searchUrl, { method: 'GET' });
 
     if (!response.ok) {
@@ -308,33 +316,64 @@ Transcribing Episode: ${episode.title || 'N/A'} from ${episode.audio_url}`);
 
 // --- Example Usage ---
 async function main() {
-  const podcastNameToSearch = "The Daily"; // Example podcast
-  const numberOfEpisodesToGet = 5; // Number of episodes to fetch and transcribe
+  const podcastNameToSearch = "Australian Finance Podcast"; // Example podcast
+  const numberOfEpisodesToGet = 3; // Number of episodes to fetch and transcribe
 
   const rssFeedUrl = await getPodcastRssUrl(podcastNameToSearch);
-
-  if (rssFeedUrl) {
-    console.log(`Found RSS feed for '${podcastNameToSearch}': ${rssFeedUrl}`);
-    const transcribedEpisodes = await getTranscribedPodcastEpisodes(rssFeedUrl, numberOfEpisodesToGet);
-
-    if (transcribedEpisodes.length > 0) {
-      console.log(`
---- Transcribed Episodes for ${podcastNameToSearch} (First ${transcribedEpisodes.length}) ---`);
-      transcribedEpisodes.forEach((episode, index) => {
-        console.log(`
-Episode ${index + 1}:`);
-        console.log(`  Title: ${episode.title || 'N/A'}`);
-        console.log(`  Published: ${episode.published || 'N/A'}`);
-        console.log(`  Summary: ${(episode.summary || 'N/A').substring(0, 150)}...`);
-        console.log(`  Audio URL: ${episode.audio_url || 'N/A'}`);
-        console.log(`  Transcription: ${episode.transcription ? episode.transcription.substring(0, 200) : 'N/A'}...`);
-      });
+  // Array of finance-related podcast names to search
+  const financePodcasts = [
+    "We Study Billionaires",
+    "Motley Fool Money",
+    "Invest Like the Best",
+    "Equity Mates Investing Podcast",
+    "Barron's Streetwise",
+    "Chat With Traders",
+    "CNBC's Fast Money",
+    "The Investing for Beginners Podcast",
+    "Mad Money w/ Jim Cramer",
+    "Investing With IBD"
+  ];
+  
+  // Iterate through each podcast name and get its RSS feed URL
+  for (const podcastName of financePodcasts) {
+    console.log(`Searching for podcast: ${podcastName}`);
+    const rssFeedUrl = await getPodcastRssUrl(podcastName);
+    
+    if (rssFeedUrl) {
+      console.log(`Found RSS feed for '${podcastName}': ${rssFeedUrl}`);
+      // You can process each podcast here if needed
+      // For example: const episodes = await getTranscribedPodcastEpisodes(rssFeedUrl, numberOfEpisodesToGet);
     } else {
-      console.log(`Could not transcribe any episodes for ${podcastNameToSearch}.`);
+      console.log(`Could not find RSS feed URL for '${podcastName}'.`);
     }
-  } else {
-    console.log(`Could not find RSS feed URL for '${podcastNameToSearch}'.`);
   }
+  
+  // For this example, we're using the first podcast in the array
+  // In a real application, you might want to process all podcasts in the array
+  console.log(`Searching for podcast: ${podcastNameToSearch}`);
+
+//   if (rssFeedUrl) {
+//     console.log(`Found RSS feed for '${podcastNameToSearch}': ${rssFeedUrl}`);
+//     const transcribedEpisodes = await getTranscribedPodcastEpisodes(rssFeedUrl, numberOfEpisodesToGet);
+
+//     if (transcribedEpisodes.length > 0) {
+//       console.log(`
+// --- Transcribed Episodes for ${podcastNameToSearch} (First ${transcribedEpisodes.length}) ---`);
+//       transcribedEpisodes.forEach((episode, index) => {
+//         console.log(`
+// Episode ${index + 1}:`);
+//         console.log(`  Title: ${episode.title || 'N/A'}`);
+//         console.log(`  Published: ${episode.published || 'N/A'}`);
+//         console.log(`  Summary: ${(episode.summary || 'N/A').substring(0, 150)}...`);
+//         console.log(`  Audio URL: ${episode.audio_url || 'N/A'}`);
+//         console.log(`  Transcription: ${episode.transcription ? episode.transcription.substring(0, 200) : 'N/A'}...`);
+//       });
+//     } else {
+//       console.log(`Could not transcribe any episodes for ${podcastNameToSearch}.`);
+//     }
+//   } else {
+//     console.log(`Could not find RSS feed URL for '${podcastNameToSearch}'.`);
+//   }
 }
 
 main().catch(error => {
@@ -345,13 +384,13 @@ main().catch(error => {
   }
 });
 
-// To run this TypeScript code:
-// 1. Make sure you have Node.js and npm (or yarn) installed.
-// 2. Install TypeScript and necessary types:
-//    npm install -g typescript
-//    npm install rss-parser @types/rss-parser openai node-fetch@^2 fs-extra @types/node-fetch@^2 @types/fs-extra
-//    (or yarn global add typescript; yarn add rss-parser @types/rss-parser openai node-fetch@^2 fs-extra @types/node-fetch@^2 @types/fs-extra)
-// 3. Compile the TypeScript to JavaScript:
-//    tsc script/podcast-scraper-draft.ts --esModuleInterop --resolveJsonModule
-// 4. Run the compiled JavaScript file:
-//    OPENAI_API_KEY='your_openai_api_key_here' node script/podcast-scraper-draft.js 
+// // To run this TypeScript code:
+// // 1. Make sure you have Node.js and npm (or yarn) installed.
+// // 2. Install TypeScript and necessary types:
+// //    npm install -g typescript
+// //    npm install rss-parser @types/rss-parser openai node-fetch@^2 fs-extra @types/node-fetch@^2 @types/fs-extra
+// //    (or yarn global add typescript; yarn add rss-parser @types/rss-parser openai node-fetch@^2 fs-extra @types/node-fetch@^2 @types/fs-extra)
+// // 3. Compile the TypeScript to JavaScript:
+// //    tsc script/podcast-scraper-draft.ts --esModuleInterop --resolveJsonModule
+// // 4. Run the compiled JavaScript file:
+// //    OPENAI_API_KEY='your_openai_api_key_here' node script/podcast-scraper-draft.js 
