@@ -20,16 +20,22 @@
 		"autoprefixer": "10.4.20",
 		"class-variance-authority": "^0.7.0",
 		"clsx": "^2.1.1",
+		"fs-extra": "^11.3.0",
 		"langchain": "^0.3.24",
 		"lucide-react": "^0.468.0",
 		"next": "latest",
 		"next-themes": "^0.4.3",
+		"node-fetch": "^2.7.0",
+		"openai": "^4.97.0",
 		"prettier": "^3.3.3",
 		"react": "19.0.0",
-		"react-dom": "19.0.0"
+		"react-dom": "19.0.0",
+		"rss-parser": "^3.13.0"
 	},
 	"devDependencies": {
+		"@types/fs-extra": "^11.0.4",
 		"@types/node": "22.10.2",
+		"@types/node-fetch": "^2.6.12",
 		"@types/react": "^19.0.2",
 		"@types/react-dom": "19.0.2",
 		"dotenv-cli": "^8.0.0",
