@@ -17,7 +17,8 @@ export default function Page() {
         <div className="grid grid-cols-1 gap-8">
           <QueryBox />
         </div>
-        <div className="center mt-10">
+        
+        {/* <div className="center mt-10">
           <h1 className="text-xl font-semibold text-center w-full bg-gradient-to-r from-red-400 to-yellow-300 text-transparent bg-clip-text">
             Admin only
           </h1>
@@ -25,7 +26,7 @@ export default function Page() {
           <div className="flex justify-center mt-3">
             <IndexingTrigger />
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
