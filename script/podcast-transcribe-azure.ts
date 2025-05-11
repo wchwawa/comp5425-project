@@ -173,12 +173,12 @@ async function getTranscriptionFiles(
 
   const responseData: TranscriptionFilesListResponse = await response.json();
 
-  const extractedUrls = responseData.values.map(file => ({
+  const selfAndContentUrls = responseData.values.map(file => ({
     selfUrl: file.self,
     contentUrl: file.links.contentUrl
   }));
 
-  return extractedUrls;
+  return selfAndContentUrls;
 }
 
 /**
@@ -232,8 +232,9 @@ export async function transcribeAudioFromUrls(
   console.log('Transcription job created:', jobDetails.self);
 
   let statusResponse = jobDetails;
-  const pollingIntervalMs = 10000; // Poll every 10 seconds
-  const maxAttempts = 60; // Max 10 minutes (60 attempts * 10 seconds)
+  const pollingIntervalMs = 60000; // Poll every 1 minute
+  // Max 5 minutes per audio file. Since polling interval is 1 minute, maxAttempts is number of files * 5.
+  const maxAttempts = contentUrls.length * 5;
   let attempts = 0;
 
   while (
@@ -289,8 +290,8 @@ async function main() {
   // IMPORTANT: Replace these with actual publicly accessible URLs to your audio files.
   const exampleAudioUrls = [
     'https://traffic.megaphone.fm/PPS8874745706.mp3?updated=1738879542', // Replace with your actual audio file URL
-    'https://pdst.fm/e/mgln.ai/e/309/traffic.megaphone.fm/TCP4937888369.mp3?updated=1744980808',
-    'https://www.podtrac.com/pts/redirect.mp3/pdst.fm/e/traffic.megaphone.fm/PPLLC2707506448.mp3?updated=1746591002'
+    // 'https://pdst.fm/e/mgln.ai/e/309/traffic.megaphone.fm/TCP4937888369.mp3?updated=1744980808',
+    // 'https://www.podtrac.com/pts/redirect.mp3/pdst.fm/e/traffic.megaphone.fm/PPLLC2707506448.mp3?updated=1746591002'
   ];
   try {
     console.log(`Attempting to transcribe ${exampleAudioUrls.length} audio file(s):`);
