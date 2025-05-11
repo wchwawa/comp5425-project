@@ -1,12 +1,13 @@
 import Parser from 'rss-parser';
 import fs from 'fs-extra'; // Added for file system operations
-import OpenAI from 'openai'; // Added for OpenAI API
+import { OpenAIClient } from '@/utils/openai/client'; // Added for OpenAI API
 import fetch from 'node-fetch'; // Added for downloading audio files
 import path from 'path'; // Added for path manipulation
 import os from 'os'; // Added for temporary directory
 import { exec } from 'child_process'; // Added for running ffmpeg
 import { promisify } from 'util'; // Added for promisifying exec
-
+import { generateTagsForDocument } from '../tag-generator';
+import { insertAudioTags } from '@/utils/supabase/queries';
 const execAsync = promisify(exec); // Promisify exec for async/await usage
 
 const OPENAI_MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
@@ -16,6 +17,7 @@ const TARGET_AUDIO_TEMPO = 1.2; // Target tempo (20% faster)
 // Define interfaces for the data structures
 interface EpisodeData {
   title?: string;
+  author?: string;
   link?: string;
   published?: string;
   published_parsed?: number; // timestamp
@@ -25,6 +27,8 @@ interface EpisodeData {
   guid?: string;
   isoDate?: string;
   transcription?: string; // Added for storing transcription
+  tags?: string[];
+  imageUrl?: string;
 }
 
 interface ItunesPodcastSearchResult {
@@ -51,18 +55,27 @@ async function fetchPodcastEpisodes(rssUrl: string): Promise<EpisodeData[]> {
     // Fetch and parse the RSS feed
     const feed = await parser.parseURL(rssUrl);
 
+    // Get author information from the feed
+    const channelAuthor = (feed as any).itunes?.author || 
+                          (feed as any).creator || 
+                          (feed as any).itunes?.owner?.name || 
+                          (feed as any).managingEditor?.split('(')[1]?.split(')')[0] || 
+                          undefined;
+
     // Extract information for each episode
     feed.items.forEach((item: Parser.Item) => {
       const episodeData: EpisodeData = {
         title: item.title,
+        author: (item as any).itunes?.author || (item as any).creator || channelAuthor,
         link: item.link,
         published: item.pubDate,
         published_parsed: item.isoDate ? new Date(item.isoDate).getTime() : undefined,
         summary: item.summary || item.contentSnippet,
         description: item.content,
-        audio_url: undefined,
+        audio_url: undefined, // Initialize with undefined, will be set by the enclosure check
         guid: item.guid,
         isoDate: item.isoDate,
+        imageUrl: (item as any).itunes?.image || (item as any)['media:thumbnail']?.$?.url || (item as any).image?.url || (feed as any).image?.url || undefined
       };
 
       if (item.enclosure && item.enclosure.url && item.enclosure.type && item.enclosure.type.startsWith('audio')) {
@@ -129,7 +142,7 @@ async function compressAudio(inputPath: string, outputPath: string, tempo: numbe
  * @param openai The OpenAI API client instance.
  * @returns A promise that resolves to the transcription text, or null/error message if an error occurs.
  */
-async function transcribeAudio(audioUrl: string, openai: OpenAI): Promise<string | null> {
+async function transcribeAudio(audioUrl: string): Promise<string | null> {
   if (!audioUrl) {
     console.log("No audio URL provided for transcription.");
     return null;
@@ -196,7 +209,7 @@ async function transcribeAudio(audioUrl: string, openai: OpenAI): Promise<string
     }
 
     console.log(`Starting transcription for ${fileToTranscribe}...`);
-    const transcription = await openai.audio.transcriptions.create({
+    const transcription = await OpenAIClient.audio.transcriptions.create({
       file: fs.createReadStream(fileToTranscribe),
       model: "whisper-1",
       response_format: "text",
@@ -275,9 +288,15 @@ async function getPodcastRssUrl(podcastName: string): Promise<string | null> {
  * @param count The number of latest episodes to transcribe (defaults to 5).
  * @returns A promise that resolves to an array of transcribed episode data objects.
  */
-export async function getTranscribedPodcastEpisodes(rssFeedUrl: string, count: number = 5): Promise<EpisodeData[]> {
-  const openai = new OpenAI(); // Initialize OpenAI client
-  console.log(`Fetching episodes from RSS feed: ${rssFeedUrl}`);
+export async function getTranscribedPodcastEpisodes(podcastsName: string, count: number = 5): Promise<EpisodeData[]> {
+  console.log(`Fetching episodes from RSS feed: ${podcastsName}`);
+  const rssFeedUrl = await getPodcastRssUrl(podcastsName);
+  console.log(`RSS feed URL: ${rssFeedUrl}`);
+  if (!rssFeedUrl) {
+    console.log(`No RSS feed found for podcast: ${podcastsName}`);
+    return [];
+  }
+  console.log(`RSS feed URL: ${rssFeedUrl}`);
   const allEpisodes = await fetchPodcastEpisodes(rssFeedUrl);
 
   if (!allEpisodes || allEpisodes.length === 0) {
@@ -294,8 +313,13 @@ export async function getTranscribedPodcastEpisodes(rssFeedUrl: string, count: n
     if (episode.audio_url) {
       console.log(`
 Transcribing Episode: ${episode.title || 'N/A'} from ${episode.audio_url}`);
-      transcriptionText = await transcribeAudio(episode.audio_url, openai);
+      // transcriptionText = await transcribeAudio(episode.audio_url);
+      transcriptionText = 'saving time so placeholder';
       episode.transcription = transcriptionText || 'Transcription failed or N/A';
+      const tags = await generateTagsForDocument(episode.summary);
+      episode.tags = tags;
+      await insertAudioTags(tags);
+
     } else {
       console.log(`Skipping transcription for Episode: ${episode.title || 'N/A'} (no audio URL)`);
       episode.transcription = 'No audio URL provided.';
@@ -306,52 +330,3 @@ Transcribing Episode: ${episode.title || 'N/A'} from ${episode.audio_url}`);
   return transcribedEpisodes;
 }
 
-// --- Example Usage ---
-async function main() {
-  const podcastNameToSearch = "The Daily"; // Example podcast
-  const numberOfEpisodesToGet = 5; // Number of episodes to fetch and transcribe
-
-  const rssFeedUrl = await getPodcastRssUrl(podcastNameToSearch);
-
-  if (rssFeedUrl) {
-    console.log(`Found RSS feed for '${podcastNameToSearch}': ${rssFeedUrl}`);
-    const transcribedEpisodes = await getTranscribedPodcastEpisodes(rssFeedUrl, numberOfEpisodesToGet);
-
-    if (transcribedEpisodes.length > 0) {
-      console.log(`
---- Transcribed Episodes for ${podcastNameToSearch} (First ${transcribedEpisodes.length}) ---`);
-      transcribedEpisodes.forEach((episode, index) => {
-        console.log(`
-Episode ${index + 1}:`);
-        console.log(`  Title: ${episode.title || 'N/A'}`);
-        console.log(`  Published: ${episode.published || 'N/A'}`);
-        console.log(`  Summary: ${(episode.summary || 'N/A').substring(0, 150)}...`);
-        console.log(`  Audio URL: ${episode.audio_url || 'N/A'}`);
-        console.log(`  Transcription: ${episode.transcription ? episode.transcription.substring(0, 200) : 'N/A'}...`);
-      });
-    } else {
-      console.log(`Could not transcribe any episodes for ${podcastNameToSearch}.`);
-    }
-  } else {
-    console.log(`Could not find RSS feed URL for '${podcastNameToSearch}'.`);
-  }
-}
-
-main().catch(error => {
-  if (error instanceof Error) {
-    console.error(`Unhandled error in main: ${error.message}`);
-  } else {
-    console.error('An unknown unhandled error occurred in main.');
-  }
-});
-
-// To run this TypeScript code:
-// 1. Make sure you have Node.js and npm (or yarn) installed.
-// 2. Install TypeScript and necessary types:
-//    npm install -g typescript
-//    npm install rss-parser @types/rss-parser openai node-fetch@^2 fs-extra @types/node-fetch@^2 @types/fs-extra
-//    (or yarn global add typescript; yarn add rss-parser @types/rss-parser openai node-fetch@^2 fs-extra @types/node-fetch@^2 @types/fs-extra)
-// 3. Compile the TypeScript to JavaScript:
-//    tsc script/podcast-scraper-draft.ts --esModuleInterop --resolveJsonModule
-// 4. Run the compiled JavaScript file:
-//    OPENAI_API_KEY='your_openai_api_key_here' node script/podcast-scraper-draft.js 

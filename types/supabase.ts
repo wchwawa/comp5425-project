@@ -51,6 +51,24 @@ export type Database = {
         }
         Relationships: []
       }
+      tags_collection: {
+        Row: {
+          id: number
+          tags: string[] | null
+          type: string
+        }
+        Insert: {
+          id?: number
+          tags?: string[] | null
+          type: string
+        }
+        Update: {
+          id?: number
+          tags?: string[] | null
+          type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
