@@ -1,4 +1,3 @@
-import IndexingTrigger from '@/components/indexing/IndexTrigger';
 import { QueryBox } from '@/components/queryBox/QueryBox';
 
 export default function Page() {
