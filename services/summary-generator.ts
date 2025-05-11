@@ -8,6 +8,7 @@ export const generateSummary = async (podcast: ContentDocument, userQuery: strin
     - The summary should be in the same language as the description
     - The summary should be no more than 100 words
     - The summary should NOT include any other text
+    - YOU MUST RESPOND IN ENGLISH
     
     Podcast Title:
     ${podcast.title}
@@ -21,7 +22,7 @@ export const generateSummary = async (podcast: ContentDocument, userQuery: strin
     ${userQuery}
     `;
     const response = await OpenAIClient.responses.create({
-        model: "gpt-4.1-mini",
+        model: "gpt-4o",
         input: prompt,
     });
     return response.output_text;

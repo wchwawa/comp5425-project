@@ -7,7 +7,7 @@
     "script": "tsx -r tsconfig-paths/register",
     "test": "dotenv -e .env.local tsx $1",
     "supabase:generate-types": "npx supabase gen types typescript --project-id axhdensnekzntodldenv > types/supabase.ts",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "next lint"
   },
   "dependencies": {
     "@langchain/community": "^0.3.42",
@@ -41,7 +41,8 @@
     "@types/react": "^19.0.2",
     "@types/react-dom": "19.0.2",
     "dotenv-cli": "^8.0.0",
-    "eslint": "^9.26.0",
+    "eslint": "8.56",
+    "eslint-config-next": "^15.3.2",
     "postcss": "8.4.49",
     "tailwind-merge": "^2.5.2",
     "tailwindcss": "3.4.17",
