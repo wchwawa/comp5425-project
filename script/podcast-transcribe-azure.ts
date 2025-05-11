@@ -233,8 +233,8 @@ export async function transcribeAudioFromUrls(
 
   let statusResponse = jobDetails;
   const pollingIntervalMs = 60000; // Poll every 1 minute
-  // Max 5 minutes per audio file. Since polling interval is 1 minute, maxAttempts is number of files * 5.
-  const maxAttempts = contentUrls.length * 5;
+  // Max 20 minutes per audio file. Since polling interval is 1 minute, maxAttempts is number of files * 5.
+  const maxAttempts = contentUrls.length * 20;
   let attempts = 0;
 
   while (
