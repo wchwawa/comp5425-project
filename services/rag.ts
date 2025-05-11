@@ -3,6 +3,7 @@ import { OpenAIEmbeddings } from '@langchain/openai';
 import { ChatOpenAI } from '@langchain/openai';
 import { Document } from '@langchain/core/documents';
 import { SupabaseVectorStore } from '@langchain/community/vectorstores/supabase';
+import { ContentDocument } from '@/types/document';
 
 
 // config & init
@@ -14,7 +15,7 @@ const embeddings = new OpenAIEmbeddings({
 });
 const llm = new ChatOpenAI({
   openAIApiKey: openaiApiKey,
-  modelName: 'gpt-4o',
+  modelName: 'gpt-4.1-mini',
   temperature: 0.2,
 });
 
@@ -40,16 +41,7 @@ const vectorStore = new SupabaseVectorStore(embeddings, {
  * @description - this fuction will send the docs to supabase vector store, 
  * embeding the content to emebdding column, and the wrap rest of the fields to json and save to metadata column.
  */
-export async function addDocuments(docs: Array<{
-  content: string,
-  title?: string,
-  source_url?: string,
-  source_type?: string,
-  tags?: string[],
-  raw_data?: any,
-  description?: string,
-  
-}>) {
+export async function addDocuments(docs: Array<ContentDocument>) {
   const documents = docs.map((doc, index) => 
     new Document({
       pageContent: doc.content,
@@ -59,12 +51,14 @@ export async function addDocuments(docs: Array<{
         source_type: doc.source_type || '',
         description: doc.description || '',
         tags: doc.tags || [],
+        imageUrl: doc.imageUrl || '',
         chunk_index: index,
-        raw_data: doc.raw_data || null
+        raw_data: doc.raw_data || null,
+        author: doc.author || '',
+        upload_time: doc.upload_time || ''
       }
     })
   );
-  
   await vectorStore.addDocuments(documents);
   return { success: true, count: documents.length };
 }
@@ -72,7 +66,7 @@ export async function addDocuments(docs: Array<{
 /**
  * return rag result
  */
-export async function RAG(query: string, options = { limit: 3, tags: undefined as string[] | undefined }) {
+export async function rag(query: string, options = { limit: 3, tags: undefined as string[] | undefined }): Promise<ContentDocument[]> {
   // build filter
   const filter = options.tags?.length ? { tags: options.tags } : undefined;
   
@@ -85,24 +79,24 @@ export async function RAG(query: string, options = { limit: 3, tags: undefined a
     return `${title}${doc.pageContent}`;
   }).join('\n\n');
   
-  return {
-    context,
-    metadata: docs.map(doc => ({
-      title: doc.metadata.title,
-      description: doc.metadata.description,
-      content: doc.pageContent,
-      source_url: doc.metadata.source_url,
-      source_type: doc.metadata.source_type,
-      tags: doc.metadata.tags,
-    }))
-  };
+  return docs.map(doc => ({
+    title: doc.metadata.title,
+    description: doc.metadata.description,
+    content: doc.pageContent,
+    source_url: doc.metadata.source_url,
+    source_type: doc.metadata.source_type,
+    tags: doc.metadata.tags,
+    imageUrl: doc.metadata.imageUrl,
+    author: doc.metadata.author,
+    upload_time: doc.metadata.upload_time,
+  }));
 }
 
 
   /**
  * return query with rag context result
  */
-export async function queryRAG(query: string, options = { limit: 3, tags: undefined as string[] | undefined }) {
+export async function queryRag(query: string, options = { limit: 3, tags: undefined as string[] | undefined }) {
   // build filter
   const filter = options.tags?.length ? { tags: options.tags } : undefined;
   

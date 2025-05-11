@@ -1,14 +1,32 @@
+import IndexingTrigger from '@/components/indexing/IndexTrigger';
+import { QueryBox } from '@/components/queryBox/QueryBox';
+
 export default function Page() {
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Podcast Player</h1>
-      <audio controls className="w-full">
-        <source
-          src="https://dts.podtrac.com/redirect.mp3/pdst.fm/e/pfx.vpixl.com/6qj4J/nyt.simplecastaudio.com/03d8b493-87fc-4bd1-931f-8a8e9b945d8a/episodes/f5f92542-16ca-4fa1-9df2-3f36808514f3/audio/128/default.mp3?aid=rss_feed&awCollectionId=03d8b493-87fc-4bd1-931f-8a8e9b945d8a&awEpisodeId=f5f92542-16ca-4fa1-9df2-3f36808514f3&feed=Sl5CSM3S"
-          type="audio/mpeg"
-        />
-        Your browser does not support the audio element.
-      </audio>
+    <div className="min-h-screen text-gray-100">
+      <div className="container mx-auto px-4 py-9">
+        <header className="mb-8">
+          <h1 className="text-5xl font-extrabold text-center w-full bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 text-transparent bg-clip-text">
+            Stock Market Podcast & News Explorer
+          </h1>
+          <p className="text-center text-gray-400 mt-2">
+            Search and discover podcasts with AI-powered insights
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 gap-8">
+          <QueryBox />
+        </div>
+        <div className="center mt-10">
+          <h1 className="text-xl font-semibold text-center w-full bg-gradient-to-r from-red-400 to-yellow-300 text-transparent bg-clip-text">
+            Admin only
+          </h1>
+
+          <div className="flex justify-center mt-3">
+            <IndexingTrigger />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
