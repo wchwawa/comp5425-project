@@ -9,8 +9,6 @@
 		"supabase:generate-types": "npx supabase gen types typescript --project-id axhdensnekzntodldenv > types/supabase.ts"
 	},
 	"dependencies": {
-		"@google-cloud/speech": "^7.0.1",
-		"@google-cloud/storage": "^7.16.0",
 		"@langchain/community": "^0.3.42",
 		"@langchain/openai": "^0.5.10",
 		"@radix-ui/react-checkbox": "^1.1.1",
