@@ -26,6 +26,7 @@
 		"fs-extra": "^11.3.0",
 		"langchain": "^0.3.24",
 		"lucide-react": "^0.468.0",
+		"microsoft-cognitiveservices-speech-sdk": "^1.43.1",
 		"next": "latest",
 		"next-themes": "^0.4.3",
 		"node-fetch": "^2.7.0",
