@@ -94,11 +94,8 @@ async function fetchPodcastEpisodes(rssUrl: string): Promise<EpisodeData[]> {
 async function compressAudio(inputPath: string, outputPath: string, tempo: number, bitrate: string): Promise<boolean> {
   const ffmpegCommand = `ffmpeg -y -i "${inputPath}" -filter:a "atempo=${tempo}" -b:a ${bitrate} "${outputPath}"`;
   console.log(`Attempting to compress audio with command: ${ffmpegCommand}`);
-  const startTime = Date.now();
   try {
     const { stdout, stderr } = await execAsync(ffmpegCommand);
-    const duration = (Date.now() - startTime) / 1000; // Duration in seconds
-    console.log(`Audio compression attempt took ${duration} seconds.`);
 
     if (stderr && !stderr.includes('Output file #0 does not contain any stream')) { // ffmpeg can output to stderr on success
       // Check for known "success" messages or patterns in stderr if necessary
@@ -120,8 +117,7 @@ async function compressAudio(inputPath: string, outputPath: string, tempo: numbe
       return false;
     }
   } catch (error) {
-    const duration = (Date.now() - startTime) / 1000; // Duration in seconds
-    console.error(`Error during ffmpeg compression (took ${duration} seconds):`, error);
+    console.error(`Error during ffmpeg compression:`, error);
     return false;
   }
 }
@@ -201,14 +197,12 @@ async function transcribeAudio(audioUrl: string, openai: OpenAI): Promise<string
     }
 
     console.log(`Starting transcription for ${fileToTranscribe}...`);
-    const transcriptionStartTime = Date.now();
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream(fileToTranscribe),
       model: "whisper-1",
       response_format: "text",
     });
-    const transcriptionDuration = (Date.now() - transcriptionStartTime) / 1000; // Duration in seconds
-    console.log(`Transcription finished. Took ${transcriptionDuration} seconds.`);
+    console.log(`Transcription finished.`);
 
     return transcription as unknown as string;
 
