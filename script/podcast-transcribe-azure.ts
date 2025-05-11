@@ -1,4 +1,3 @@
-import { sl } from "element-plus/es/locale";
 
 interface TranscriptionProperties {
   wordLevelTimestampsEnabled?: boolean;
