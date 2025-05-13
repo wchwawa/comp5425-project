@@ -297,7 +297,6 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
     console.log(`No RSS feed found for podcast: ${podcastsName}`);
     return [];
   }
-  console.log(`RSS feed URL: ${rssFeedUrl}`);
   const allEpisodes = await fetchPodcastEpisodes(rssFeedUrl);
 
   if (!allEpisodes || allEpisodes.length === 0) {
@@ -311,12 +310,11 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
   const audioUrls = episodesToTranscribe
     .map(episode => episode.audio_url)
     .filter((url): url is string => url !== undefined);
-
+  console.log(`Transcribing ${audioUrls.length} episodes..., urls: ${audioUrls}`);
   const transcriptionResult = await transcribeAudioFromUrls(audioUrls);
   for (const episode of episodesToTranscribe) {
-    let transcriptionText: string = 'No audio URL or transcription not attempted.';
     if (episode.audio_url && transcriptionResult[episode.audio_url]) {
-      transcriptionText = transcriptionResult[episode.audio_url];
+      episode.transcription = transcriptionResult[episode.audio_url];
     }
     const tags = await generateTagsForDocument(episode.summary);
     episode.tags = tags;

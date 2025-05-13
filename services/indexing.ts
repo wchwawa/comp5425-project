@@ -32,7 +32,7 @@ const podcastSet = [
   // "The Ideas Exchange",
   // "MarketBeat",
   // "ETF Spotlight",
-  "The Best One Yet"
+  // "The Best One Yet"
 ];
 
   const filteredPodcastSet = Array.from(new Set(podcastSet));
@@ -47,7 +47,7 @@ export async function indexPodcastEpisodes() {
         continue;
       }
       const docs = episodesData.map(episode => ({
-        content:  'no summary',
+        content:  episode.transcription || 'no transcription',
         title: episode.title || 'Untitled Episode',
         source_url: episode.audio_url || '',
         source_type: 'podcast',

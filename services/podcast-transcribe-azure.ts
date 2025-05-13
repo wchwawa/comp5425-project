@@ -310,32 +310,32 @@ export async function transcribeAudioFromUrls(
   return transcriptionMap;
 }
 
-async function main() {
-  console.log('Starting transcription test in main function...');
+// async function main() {
+//   console.log('Starting transcription test in main function...');
 
-  // IMPORTANT: Replace these with actual publicly accessible URLs to your audio files.
-  const exampleAudioUrls = [
-    'https://traffic.megaphone.fm/PPS8874745706.mp3?updated=1738879542', // Replace with your actual audio file URL
-    'https://pdst.fm/e/mgln.ai/e/309/traffic.megaphone.fm/TCP4937888369.mp3?updated=1744980808',
-    'https://www.podtrac.com/pts/redirect.mp3/pdst.fm/e/traffic.megaphone.fm/PPLLC2707506448.mp3?updated=1746591002'
-  ];
+//   // IMPORTANT: Replace these with actual publicly accessible URLs to your audio files.
+//   const exampleAudioUrls = [
+//     'https://traffic.megaphone.fm/PPS8874745706.mp3?updated=1738879542', // Replace with your actual audio file URL
+//     'https://pdst.fm/e/mgln.ai/e/309/traffic.megaphone.fm/TCP4937888369.mp3?updated=1744980808',
+//     'https://www.podtrac.com/pts/redirect.mp3/pdst.fm/e/traffic.megaphone.fm/PPLLC2707506448.mp3?updated=1746591002'
+//   ];
 
-    console.log(`Attempting to transcribe ${exampleAudioUrls.length} audio file(s):`);
-    exampleAudioUrls.forEach((url, index) => console.log(`  ${index + 1}: ${url}` ));
+//     console.log(`Attempting to transcribe ${exampleAudioUrls.length} audio file(s):`);
+//     exampleAudioUrls.forEach((url, index) => console.log(`  ${index + 1}: ${url}` ));
 
 
-    const transcriptionFiles = await transcribeAudioFromUrls(
-      exampleAudioUrls,
-      'en-US', // Specify the locale of your audio
-      'Test Transcription from Main'
-      // customProperties // Uncomment to use custom properties
-    );
+//     const transcriptionFiles = await transcribeAudioFromUrls(
+//       exampleAudioUrls,
+//       'en-US', // Specify the locale of your audio
+//       'Test Transcription from Main'
+//       // customProperties // Uncomment to use custom properties
+//     );
 
   
-}
+// }
 
-main().catch(error => {
-  // This catch is mostly for unhandled promise rejections from main itself,
-  // though the try/catch inside main should handle most operational errors.
-  console.error("Unhandled error in main execution:", error);
-});
+// main().catch(error => {
+//   // This catch is mostly for unhandled promise rejections from main itself,
+//   // though the try/catch inside main should handle most operational errors.
+//   console.error("Unhandled error in main execution:", error);
+// });
