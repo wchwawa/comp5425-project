@@ -1,7 +1,7 @@
 import { ChatOpenAI } from "@langchain/openai"
 import {z} from "zod"
 import { getAudioTags } from "@/utils/supabase/queries"
-
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 /**
  * 
  * @param podcastContent 
@@ -12,9 +12,10 @@ export async function generateTagsForDocument(podcastContent: string | undefined
   const schema = z.object({
     tags: z.array(z.string()),
   });
-  const llm = new ChatOpenAI({
-    model: "gpt-4.1",
-    temperature: 0,
+ 
+  const llm = new ChatGoogleGenerativeAI({
+    model: "gemini-2.5-flash",
+    maxOutputTokens: 4096,
   });
 
   const runnable = llm.withStructuredOutput(schema);
