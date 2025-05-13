@@ -319,8 +319,12 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
   } else {
     episodesToTranscribe = allEpisodes.slice(0, Math.min(count, allEpisodes.length));
   }
-  console.log(`existingPodcasts: ${existingPodcasts}`);
-  console.log(`episodesToTranscribe: ${episodesToTranscribe.map((item) => item.title)}`);
+  // console.log(`existingPodcasts: ${existingPodcasts}`);
+  // console.log(`episodesToTranscribe: ${episodesToTranscribe.map((item) => item.title)}`);
+  if (episodesToTranscribe.length === 0) {
+    console.log("No episodes to transcribe.");
+    return [];
+  }
   const transcribedEpisodes: EpisodeData[] = [];
   const audioUrls = episodesToTranscribe
     .map(episode => episode.audio_url)
