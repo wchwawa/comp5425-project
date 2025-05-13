@@ -8,6 +8,7 @@ import { exec } from 'child_process'; // Added for running ffmpeg
 import { promisify } from 'util'; // Added for promisifying exec
 import { generateTagsForDocument } from '../tag-generator';
 import { insertAudioTags } from '@/utils/supabase/queries';
+import { transcribeAudioFromUrls } from '../podcast-transcribe-azure';
 const execAsync = promisify(exec); // Promisify exec for async/await usage
 
 const OPENAI_MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
@@ -282,8 +283,6 @@ async function getPodcastRssUrl(podcastName: string): Promise<string | null> {
 }
 
 /**
- * TODO 
- * Link to VectorDB to avoid duplicate record
  * Fetches, transcribes, and returns a specified number of podcast episodes from an RSS feed.
  *
  * @param rssFeedUrl The URL of the podcast's RSS feed.
@@ -309,23 +308,19 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
   console.log(`Fetched ${allEpisodes.length} total episodes. Processing the latest ${Math.min(count, allEpisodes.length)}.`);
   const episodesToTranscribe = allEpisodes.slice(0, Math.min(count, allEpisodes.length));
   const transcribedEpisodes: EpisodeData[] = [];
+  const audioUrls = episodesToTranscribe
+    .map(episode => episode.audio_url)
+    .filter((url): url is string => url !== undefined);
 
+  const transcriptionResult = await transcribeAudioFromUrls(audioUrls);
   for (const episode of episodesToTranscribe) {
-    let transcriptionText: string | null = 'No audio URL or transcription not attempted.';
-    if (episode.audio_url) {
-      console.log(`
-Transcribing Episode: ${episode.title || 'N/A'} from ${episode.audio_url}`);
-      // transcriptionText = await transcribeAudio(episode.audio_url);
-      transcriptionText = 'saving time so placeholder';
-      episode.transcription = transcriptionText || 'Transcription failed or N/A';
-      const tags = await generateTagsForDocument(episode.summary);
-      episode.tags = tags;
-      await insertAudioTags(tags);
-
-    } else {
-      console.log(`Skipping transcription for Episode: ${episode.title || 'N/A'} (no audio URL)`);
-      episode.transcription = 'No audio URL provided.';
+    let transcriptionText: string = 'No audio URL or transcription not attempted.';
+    if (episode.audio_url && transcriptionResult[episode.audio_url]) {
+      transcriptionText = transcriptionResult[episode.audio_url];
     }
+    const tags = await generateTagsForDocument(episode.summary);
+    episode.tags = tags;
+    await insertAudioTags(tags);
     transcribedEpisodes.push(episode);
   }
 

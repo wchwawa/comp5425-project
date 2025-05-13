@@ -22,7 +22,7 @@ const llm = new ChatOpenAI({
 // config vector store
 const vectorStore = new SupabaseVectorStore(embeddings, {
   client: supabase,
-  tableName: 'documents',
+  tableName: 'documents_transcribed',
   queryName: 'match_documents'
 });
 

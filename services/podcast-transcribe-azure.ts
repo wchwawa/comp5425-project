@@ -1,4 +1,3 @@
-
 interface TranscriptionProperties {
   wordLevelTimestampsEnabled?: boolean;
   displayFormWordLevelTimestampsEnabled?: boolean; // For Whisper models
@@ -70,8 +69,9 @@ interface TranscriptionFilesListResponse {
 }
 
 interface SelfAndContentUrl {
-  selfUrl: string;
   contentUrl: string;
+  source: string;
+  transcription: string;
 }
 
 /**
@@ -147,10 +147,11 @@ async function getTranscriptionStatus(
 }
 
 /**
- * Lists the files associated with a completed transcription job.
+ * Lists the files associated with a completed transcription job and fetches their content.
+ * For each file, fetches the contentUrl, parses the JSON, and extracts the transcription text.
  * @param subscriptionKey Your Speech resource key.
  * @param filesUrl The URL for the files endpoint of the transcription job (from jobDetails.links.files).
- * @returns A promise that resolves to the list of transcription files.
+ * @returns A promise that resolves to the list of objects with contentUrl, source, and transcription.
  */
 async function getTranscriptionFiles(
   subscriptionKey: string,
@@ -172,12 +173,31 @@ async function getTranscriptionFiles(
 
   const responseData: TranscriptionFilesListResponse = await response.json();
 
-  const selfAndContentUrls = responseData.values.map(file => ({
-    selfUrl: file.self,
-    contentUrl: file.links.contentUrl
-  }));
+  const results: SelfAndContentUrl[] = [];
+  for (const file of responseData.values) {
+    if (file.kind !== 'Transcription') {
+      continue;
+    }
+    const contentUrl = file.links.contentUrl;
+    let transcription = '';
+    let source = '';
+    try {
+      const fileResponse = await fetch(contentUrl);
+      if (fileResponse.ok) {
+        const fileJson = await fileResponse.json();
+        // Try to extract transcription text in a simple way
+        transcription = fileJson.combinedRecognizedPhrases[0].lexical;
+        source = fileJson.source;
+      } else {
+        transcription = `Failed to fetch transcription content: ${fileResponse.status}`;
+      }
+    } catch (err) {
+      transcription = `Error fetching or parsing transcription: ${err}`;
+    }
+    results.push({ contentUrl, source, transcription });
+  }
 
-  return selfAndContentUrls;
+  return results;
 }
 
 /**
@@ -187,15 +207,15 @@ async function getTranscriptionFiles(
  * @param locale The locale of the audio data (e.g., "en-US"). Defaults to "en-US".
  * @param displayName A human-readable name for the transcription job. Defaults to "Batch Transcription via SDK".
  * @param properties Optional properties to configure the transcription, such as diarization or punctuation.
- * @returns A promise that resolves to an array of objects containing the self URL and content URL for each transcription file.
+ * @returns A promise that resolves to a map where keys are source texts and values are transcriptions.
  * @throws Error if environment variables are not set or if any API call fails.
  */
 export async function transcribeAudioFromUrls(
-  contentUrls: string[],
+  contentUrls: string[] ,
   locale: string = 'en-US',
   displayName: string = 'Batch Transcription via SDK',
   properties?: TranscriptionProperties
-): Promise<SelfAndContentUrl[]> {
+): Promise<Record<string, string>> {
   const subscriptionKey = process.env.AZURE_SPEECH_API_KEY;
   const serviceRegion = process.env.AZURE_SPEECH_REGION;
 
@@ -280,7 +300,14 @@ export async function transcribeAudioFromUrls(
     statusResponse.links.files
   );
   console.log('Transcription files retrieved:', files);
-  return files;
+  
+  // Convert the array of SelfAndContentUrl objects to a map of source:transcription
+  const transcriptionMap: Record<string, string> = {};
+  for (const file of files) {
+    transcriptionMap[file.source] = file.transcription;
+  }
+  
+  return transcriptionMap;
 }
 
 async function main() {
@@ -289,19 +316,13 @@ async function main() {
   // IMPORTANT: Replace these with actual publicly accessible URLs to your audio files.
   const exampleAudioUrls = [
     'https://traffic.megaphone.fm/PPS8874745706.mp3?updated=1738879542', // Replace with your actual audio file URL
-    // 'https://pdst.fm/e/mgln.ai/e/309/traffic.megaphone.fm/TCP4937888369.mp3?updated=1744980808',
-    // 'https://www.podtrac.com/pts/redirect.mp3/pdst.fm/e/traffic.megaphone.fm/PPLLC2707506448.mp3?updated=1746591002'
+    'https://pdst.fm/e/mgln.ai/e/309/traffic.megaphone.fm/TCP4937888369.mp3?updated=1744980808',
+    'https://www.podtrac.com/pts/redirect.mp3/pdst.fm/e/traffic.megaphone.fm/PPLLC2707506448.mp3?updated=1746591002'
   ];
-  try {
+
     console.log(`Attempting to transcribe ${exampleAudioUrls.length} audio file(s):`);
     exampleAudioUrls.forEach((url, index) => console.log(`  ${index + 1}: ${url}` ));
 
-    // Optional: Define custom properties if needed
-    // const customProperties: TranscriptionProperties = {
-    //   wordLevelTimestampsEnabled: true,
-    //   punctuationMode: 'DictatedAndAutomatic',
-    //   diarizationEnabled: false, // Set to true if your audio is suitable and you need speaker separation
-    // };
 
     const transcriptionFiles = await transcribeAudioFromUrls(
       exampleAudioUrls,
@@ -310,32 +331,7 @@ async function main() {
       // customProperties // Uncomment to use custom properties
     );
 
-    console.log('\n--- Transcription Successful ---');
-    if (transcriptionFiles.length > 0) {
-      console.log('Retrieved transcription file URLs:');
-      transcriptionFiles.forEach((file, index) => {
-        console.log(`  File ${index + 1}:`);
-        console.log(`    Self URL: ${file.selfUrl}`);
-        console.log(`    Content URL (for download): ${file.contentUrl}`);
-      });
-      console.log('\nYou can now download the transcription results from the content URLs.');
-    } else {
-      console.log('No transcription files were returned, though the job succeeded.');
-    }
-  } catch (error) {
-    console.error('\n--- Transcription Process Failed ---');
-    if (error instanceof Error) {
-      console.error('Error:', error.message);
-      if (error.stack) {
-        // console.error('Stack trace:', error.stack);
-      }
-    } else {
-      console.error('An unknown error occurred:', error);
-    }
-    console.error('Please check your Azure Speech service credentials, region, and input audio URLs.');
-  }
-
-  console.log('\nMain function execution finished.');
+  
 }
 
 main().catch(error => {
