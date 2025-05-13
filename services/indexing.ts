@@ -41,6 +41,7 @@ const podcastSet = [
 export async function indexPodcastEpisodes() {
   try{
     for (const podcast of filteredPodcastSet) {
+      // TODO Remove duplicate of episodes from database
       const episodesData = await getTranscribedPodcastEpisodes(podcast, 2);
       if (episodesData.length === 0) {
         console.log(`No episodes found for podcast: ${podcast}`);
