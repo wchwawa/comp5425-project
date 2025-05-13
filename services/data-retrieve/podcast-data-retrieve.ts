@@ -285,7 +285,7 @@ async function getPodcastRssUrl(podcastName: string): Promise<string | null> {
 async function GetExistingPodcasts() {
   const supabase = await createClient();
   const { data: documents_transcribed } = await supabase.from("documents_transcribed").select();
-  return documents_transcribed?.map((item) => item.metadata.source_url);
+  return documents_transcribed?.map((item) => item.metadata.title);
 }
 
 /**
@@ -314,10 +314,13 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
   console.log(`Fetched ${allEpisodes.length} total episodes. Processing the latest ${Math.min(count, allEpisodes.length)}.`);
   let episodesToTranscribe: EpisodeData[] = [];
   if (existingPodcasts && existingPodcasts.length > 0) {
-    episodesToTranscribe = allEpisodes.filter((episode) => !existingPodcasts.includes(episode.audio_url)).slice(0, Math.min(count, allEpisodes.length));
+    episodesToTranscribe = allEpisodes.slice(0, Math.min(count, allEpisodes.length));
+    episodesToTranscribe = episodesToTranscribe.filter((episode) => !existingPodcasts.includes(episode.title));
   } else {
     episodesToTranscribe = allEpisodes.slice(0, Math.min(count, allEpisodes.length));
   }
+  console.log(`existingPodcasts: ${existingPodcasts}`);
+  console.log(`episodesToTranscribe: ${episodesToTranscribe.map((item) => item.title)}`);
   const transcribedEpisodes: EpisodeData[] = [];
   const audioUrls = episodesToTranscribe
     .map(episode => episode.audio_url)

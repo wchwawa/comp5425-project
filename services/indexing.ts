@@ -2,9 +2,9 @@ import { getTranscribedPodcastEpisodes } from './data-retrieve/podcast-data-retr
 import { addDocuments } from './rag';
 const podcastSet = [
   "The Clark Howard Podcast",
-  "Bloomberg Masters in Business Podcast", 
-  "Goldman Sachs Exchanges",
-  "CNBC's Fast Money Podcast",
+  // "Bloomberg Masters in Business Podcast", 
+  // "Goldman Sachs Exchanges",
+  // "CNBC's Fast Money Podcast",
   // "Real Vision",
   // "The Compound and Friends",
   // "Rational Reminder Podcast",
@@ -42,7 +42,7 @@ export async function indexPodcastEpisodes() {
   try{
     const allEpisodesPromises = filteredPodcastSet.map(podcast => {
 
-      return getTranscribedPodcastEpisodes(podcast, 14);
+      return getTranscribedPodcastEpisodes(podcast, 2);
     });
 
     const allEpisodesDataArrays = await Promise.all(allEpisodesPromises);
@@ -56,7 +56,7 @@ export async function indexPodcastEpisodes() {
         continue;
       }
       const docs = episodesData.map(episode => ({
-        content:  episode.transcription || 'no transcription',
+        content:  episode.transcription?.slice(0, 8100) || 'no transcription',
         title: episode.title || 'Untitled Episode',
         source_url: episode.audio_url || '',
         source_type: 'podcast',
@@ -65,6 +65,7 @@ export async function indexPodcastEpisodes() {
         imageUrl: episode.imageUrl || '',
         author: episode.author || '',
         upload_time: episode.isoDate || '',
+        raw_data: episode.transcription || ''
       }));
       await addDocuments(docs);
     }
