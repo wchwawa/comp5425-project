@@ -5,34 +5,34 @@ const podcastSet = [
   "Bloomberg Masters in Business Podcast", 
   "Goldman Sachs Exchanges",
   "CNBC's Fast Money Podcast",
-  "Real Vision",
-  "The Compound and Friends",
-  "Rational Reminder Podcast",
-  "M&A Science",
-  "Australian Finance Podcast (Rask)",
-  "The Ideas Exchange by ASX",
-  "We Study Billionaires",
-  "Motley Fool Money",
-  "Invest Like the Best",
-  "Equity Mates Investing Podcast",
-  "Barron's Streetwise",
-  "Chat With Traders",
-  "CNBC's Fast Money",
-  "The Investing for Beginners Podcast",
-  "Mad Money w/ Jim Cramer",
-  "Investing With IBD",
-  "Wall Street Breakfast – Seeking Alpha",
-  "The Meb Faber Show",
-  "WSJ Your Money Briefing",
-  "ETF Prime",
-  "Option Alpha Podcast",
-  "Animal Spirits",
-  "ETF Spotlight - Zacks",
-  "Stock Market Today with IBD",
-  "The Ideas Exchange",
-  "MarketBeat",
-  "ETF Spotlight",
-  "The Best One Yet"
+  // "Real Vision",
+  // "The Compound and Friends",
+  // "Rational Reminder Podcast",
+  // "M&A Science",
+  // "Australian Finance Podcast (Rask)",
+  // "The Ideas Exchange by ASX",
+  // "We Study Billionaires",
+  // "Motley Fool Money",
+  // "Invest Like the Best",
+  // "Equity Mates Investing Podcast",
+  // "Barron's Streetwise",
+  // "Chat With Traders",
+  // "CNBC's Fast Money",
+  // "The Investing for Beginners Podcast",
+  // "Mad Money w/ Jim Cramer",
+  // "Investing With IBD",
+  // "Wall Street Breakfast – Seeking Alpha",
+  // "The Meb Faber Show",
+  // "WSJ Your Money Briefing",
+  // "ETF Prime",
+  // "Option Alpha Podcast",
+  // "Animal Spirits",
+  // "ETF Spotlight - Zacks",
+  // "Stock Market Today with IBD",
+  // "The Ideas Exchange",
+  // "MarketBeat",
+  // "ETF Spotlight",
+  // "The Best One Yet"
 ];
 
   const filteredPodcastSet = Array.from(new Set(podcastSet));
@@ -40,9 +40,17 @@ const podcastSet = [
 
 export async function indexPodcastEpisodes() {
   try{
-    for (const podcast of filteredPodcastSet) {
-      // TODO Remove duplicate of episodes from database
-      const episodesData = await getTranscribedPodcastEpisodes(podcast, 14);
+    const allEpisodesPromises = filteredPodcastSet.map(podcast => {
+
+      return getTranscribedPodcastEpisodes(podcast, 14);
+    });
+
+    const allEpisodesDataArrays = await Promise.all(allEpisodesPromises);
+
+    for (let i = 0; i < filteredPodcastSet.length; i++) {
+      const podcast = filteredPodcastSet[i];
+      const episodesData = allEpisodesDataArrays[i];
+
       if (episodesData.length === 0) {
         console.log(`No episodes found for podcast: ${podcast}`);
         continue;

@@ -9,6 +9,7 @@ import { promisify } from 'util'; // Added for promisifying exec
 import { generateTagsForDocument } from '../tag-generator';
 import { insertAudioTags } from '@/utils/supabase/queries';
 import { transcribeAudioFromUrls } from '../podcast-transcribe-azure';
+import { createClient } from '@/utils/supabase/client';
 const execAsync = promisify(exec); // Promisify exec for async/await usage
 
 const OPENAI_MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
@@ -281,6 +282,11 @@ async function getPodcastRssUrl(podcastName: string): Promise<string | null> {
     return null;
   }
 }
+async function GetExistingPodcasts() {
+  const supabase = await createClient();
+  const { data: documents_transcribed } = await supabase.from("documents_transcribed").select();
+  return documents_transcribed?.map((item) => item.metadata.source_url);
+}
 
 /**
  * Fetches, transcribes, and returns a specified number of podcast episodes from an RSS feed.
@@ -297,6 +303,7 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
     console.log(`No RSS feed found for podcast: ${podcastsName}`);
     return [];
   }
+  const existingPodcasts = await GetExistingPodcasts();
   const allEpisodes = await fetchPodcastEpisodes(rssFeedUrl);
 
   if (!allEpisodes || allEpisodes.length === 0) {
@@ -305,7 +312,12 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
   }
 
   console.log(`Fetched ${allEpisodes.length} total episodes. Processing the latest ${Math.min(count, allEpisodes.length)}.`);
-  const episodesToTranscribe = allEpisodes.slice(0, Math.min(count, allEpisodes.length));
+  let episodesToTranscribe: EpisodeData[] = [];
+  if (existingPodcasts && existingPodcasts.length > 0) {
+    episodesToTranscribe = allEpisodes.filter((episode) => !existingPodcasts.includes(episode.audio_url)).slice(0, Math.min(count, allEpisodes.length));
+  } else {
+    episodesToTranscribe = allEpisodes.slice(0, Math.min(count, allEpisodes.length));
+  }
   const transcribedEpisodes: EpisodeData[] = [];
   const audioUrls = episodesToTranscribe
     .map(episode => episode.audio_url)
