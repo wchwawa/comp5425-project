@@ -41,7 +41,7 @@ const vectorStore = new SupabaseVectorStore(embeddings, {
  * @description - this fuction will send the docs to supabase vector store, 
  * embeding the content to emebdding column, and the wrap rest of the fields to json and save to metadata column.
  */
-export async function addDocuments(docs: Array<ContentDocument>) {
+export async function embeddingPodcastDocuments(docs: Array<ContentDocument>) {
   let totalAddedCount = 0;
   const chunkSize = 10;
 

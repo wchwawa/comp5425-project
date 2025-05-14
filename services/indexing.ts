@@ -1,5 +1,5 @@
 import { getTranscribedPodcastEpisodes } from './data-retrieve/podcast-data-retrieve';
-import { addDocuments } from './rag';
+import { embeddingPodcastDocuments } from './rag';
 const podcastSet = [
   "The Clark Howard Podcast",
   "Bloomberg Masters in Business Podcast", 
@@ -71,12 +71,13 @@ export async function indexPodcastEpisodes() {
         upload_time: episode.isoDate || '',
         raw_data: episode.transcription || ''
       }));
-      await addDocuments(docs);
+      await embeddingPodcastDocuments(docs);
     }
   } catch (error) {
     console.error('Error in indexPodcastEpisodes:', error);
     throw error;
   }
 }
+
 
 

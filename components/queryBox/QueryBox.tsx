@@ -1,28 +1,44 @@
 'use client';
+
 import { useState } from 'react';
 import { ContentDocument } from '@/types/document';
 import { PodcastCard } from '@/components/Card/PodCastCard';
+import TradingViewSymbolOverviewChart from '@/components/ui/tradingview-widget/TradingViewSimpleChartWidget';
+import { NewsDisplay, ProcessedNewsItem } from '@/components/NewsDisplay';
 
 export const QueryBox = () => {
   const [query, setQuery] = useState('');
   const [podcastDocuments, setPodcastDocuments] = useState<ContentDocument[]>(
     []
   );
+  const [chartSymbol, setChartSymbol] = useState<string[][]>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [newsItems, setNewsItems] = useState<ProcessedNewsItem[]>([]);
+  const [isNewsLoading, setIsNewsLoading] = useState(false);
+  const [newsError, setNewsError] = useState<string | null>(null);
+
   const handleSearch = async () => {
+    console.log('handleSearch called with query:', query);
     if (!query.trim()) return;
 
     setIsLoading(true);
     setError(null);
+    setPodcastDocuments([]);
 
+    setIsNewsLoading(true);
+    setNewsError(null);
+    setNewsItems([]);
+
+    //fetch podcast documents
     try {
-      const response = await fetch('/api/query', {
+      const response = await fetch('/api/fetchPodcast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query })
       });
+      console.log('podcast response=====================', response);
 
       if (!response.ok) {
         throw new Error('Search failed, please try again later');
@@ -32,9 +48,75 @@ export const QueryBox = () => {
       setPodcastDocuments(data.podcastDocuments || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'invalid error');
+      console.error('Error during /api/fetchPodcast:', err);
+    } finally {
+      // setIsLoading for podcast and chart symbol will be handled after all primary fetches
+    }
+
+    //fetch trading view simple chart symbol
+    console.log(
+      'Preparing to fetch /api/fetchSimpleChartSymbol for query:',
+      query
+    );
+    try {
+      const response = await fetch('/api/fetchSimpleChartSymbol', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          'Symbol for chart retrive failed, please try again later'
+        );
+      }
+
+      const data = await response.json();
+      const symbols: string[][] = data.stockSymbols;
+      console.log(
+        'FROM API (fetchSimpleChartSymbol) =====================',
+        symbols
+      );
+      setChartSymbol(symbols);
+      console.log('chart symbol state', chartSymbol);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'invalid error');
       console.error('Search error:', err);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Combined loading state for podcast and chart
+    }
+
+    //fetch alphavantage news & sentiment
+    console.log(
+      'Preparing to fetch /api/fetchAlphavantageNews for query:',
+      query
+    );
+    try {
+      const newsResponse = await fetch('/api/fetchAlphavantageNews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+
+      if (!newsResponse.ok) {
+        const errorData = await newsResponse.json();
+        throw new Error(
+          errorData.error || 'News fetching failed, please try again later'
+        );
+      }
+
+      const newsData = await newsResponse.json();
+      // The newsData.news should now be an array of ProcessedNewsItem from the server
+      if (newsData.news) {
+        setNewsItems(newsData.news); // Directly set the processed news
+      } else {
+        setNewsItems([]);
+      }
+    } catch (err) {
+      setNewsError(err instanceof Error ? err.message : 'Failed to fetch news');
+      console.error('Error during /api/fetchAlphavantageNews:', err);
+    } finally {
+      setIsNewsLoading(false);
     }
   };
 
@@ -60,6 +142,7 @@ export const QueryBox = () => {
               disabled={isLoading}
             />
             <button
+              type="button"
               onClick={handleSearch}
               disabled={isLoading}
               className="px-6 py-3 bg-indigo-700/80 text-white rounded-md hover:bg-indigo-600/80 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors duration-200 whitespace-nowrap backdrop-blur-sm"
@@ -68,7 +151,6 @@ export const QueryBox = () => {
             </button>
           </div>
         </div>
-
         {/* error msg */}
         {error && (
           <div className="py-3 px-4 bg-red-900/30 border border-red-800/50 text-red-300 rounded-xl backdrop-blur-md w-full">
@@ -91,7 +173,6 @@ export const QueryBox = () => {
             </div>
           </div>
         )}
-
         {/* podcast display area */}
         <div className="w-full">
           {isLoading ? (
@@ -104,7 +185,6 @@ export const QueryBox = () => {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-3 h-3 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full"></div>
                 </div>
-
               </div>
               <p className="mt-4 text-gray-300 font-medium">
                 Processing your query...
@@ -156,6 +236,20 @@ export const QueryBox = () => {
             </div>
           )}
         </div>
+        {/* TradingView Chart Widget */}
+        <div className="w-full backdrop-blur-md bg-black/30 p-4 rounded-xl border border-gray-800/50 shadow-md">
+          <h3 className="text-lg font-medium text-gray-200 mb-3">
+            Intelligent chart
+          </h3>
+          <TradingViewSymbolOverviewChart stockSymbols={chartSymbol || []} />
+        </div>
+
+        {/* News Display Area */}
+        <NewsDisplay
+          newsItems={newsItems}
+          isLoading={isNewsLoading}
+          error={newsError}
+        />
       </div>
 
       {/* add CSS animations */}

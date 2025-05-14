@@ -1,4 +1,4 @@
-import { addDocuments, rag, queryRag } from '@/services/rag';
+import { embeddingPodcastDocuments, rag, queryRag } from '@/services/rag';
 import { generateTagsForQuery } from '@/services/tag-generator';
 
 
