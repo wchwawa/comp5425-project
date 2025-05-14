@@ -1,6 +1,6 @@
 import { getTranscribedPodcastEpisodes } from './data-retrieve/podcast-data-retrieve';
-import { addDocuments } from './rag';
-const podcastSet = ["The Clark Howard Podcast", "Bloomberg Masters in Business Podcast", "Goldman Sachs Exchanges", "CNBC's Fast Money Podcast", "Real Vision", "The Compound and Friends", "Rational Reminder Podcast", "M&A Science", "Australian Finance Podcast (Rask)", "The Ideas Exchange by ASX",  "We Study Billionaires", "Motley Fool Money", "Invest Like the Best", "Equity Mates Investing Podcast", "Barron's Streetwise", "Chat With Traders", "CNBC's Fast Money", "The Investing for Beginners Podcast", "Mad Money w/ Jim Cramer", "Investing With IBD",   "Wall Street Breakfast – Seeking Alpha",
+import { embeddingPodcastDocuments } from './rag';
+const podcastSet = ["The Clark Howard Podcast", "Bloomberg Masters in Business Podcast", "Goldman Sachs Exchanges", "CNBC's Fast Money Podcast", "Real Vision", "The Compound and Friends", "Rational Reminder Podcast", "M&A Science", "Australian Finance Podcast (Rask)", "The Ideas Exchange by ASX",  "We Study Billionaires", "Motley Fool Money", "Invest Like the Best", "Equity Mates Investing Podcast", "Barron's Streetwise", "Chat With Traders", "CNBC's Fast Money", "The Investing for Beginners Podcast", "Mad Money w/ Jim Cramer", "Investing With IBD",   "Wall Street Breakfast - Seeking Alpha",
   "The Meb Faber Show",
   "WSJ Your Money Briefing",
   "ETF Prime",
@@ -32,12 +32,13 @@ export async function indexPodcastEpisodes() {
         author: episode.author || '',
         upload_time: episode.isoDate || '',
       }));
-      await addDocuments(docs);
+      await embeddingPodcastDocuments(docs);
     }
   } catch (error) {
     console.error('Error in indexPodcastEpisodes:', error);
     throw error;
   }
 }
+
 
 

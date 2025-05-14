@@ -1,0 +1,121 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Alpha Vantage API 使用指南
+
+本文档描述如何在项目中使用 Alpha Vantage API 进行股票新闻情绪分析。
+
+## API 密钥
+
+Alpha Vantage API 需要一个 API 密钥才能使用。在环境变量中设置：
+
+```
+ALPHA_VANTAGE_API_KEY=your_api_key_here
+```
+
+## 端点
+
+主要使用的端点：
+
+1. **NEWS_SENTIMENT** - 获取与特定股票相关的新闻情绪数据
+   - 基础 URL: `https://www.alphavantage.co/query`
+   - 参数:
+     - `function=NEWS_SENTIMENT` (必需)
+     - `tickers=SYMBOL1,SYMBOL2` (必需，股票代码，逗号分隔)
+     - `topics=TOPIC1,TOPIC2` (可选，主题过滤，逗号分隔)
+     - `time_from=YYYYMMDDTHHMM` (可选，开始时间)
+     - `time_to=YYYYMMDDTHHMM` (可选，结束时间)
+     - `limit=N` (可选，限制返回的新闻条数，默认为 50)
+     - `sort=LATEST` (可选，排序方式，可选值为 LATEST, RELEVANCE, EARLIEST)
+     - `apikey=YOUR_API_KEY` (必需)
+
+## 代码示例
+
+```typescript
+async function fetchNewsSentiment(ticker: string, limit: number = 10) {
+  const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
+  const url = `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=${ticker}&limit=${limit}&apikey=${apiKey}`;
+  
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching news sentiment:', error);
+    throw error;
+  }
+}
+```
+
+## 数据处理
+
+处理 Alpha Vantage API 响应数据的示例：
+
+```typescript
+interface AlphaVantageTopic {
+  topic: string;
+  relevance_score: number;
+}
+
+interface AlphaVantageTickerSentiment {
+  ticker: string;
+  relevance_score: number;
+  ticker_sentiment_score: number;
+  ticker_sentiment_label: string;
+}
+
+interface AlphaVantageNewsItem {
+  title: string;
+  url: string;
+  time_published: string;
+  authors: string[];
+  summary: string;
+  banner_image: string;
+  source: string;
+  category_within_source: string;
+  source_domain: string;
+  topics: AlphaVantageTopic[];
+  overall_sentiment_score: number;
+  overall_sentiment_label: string;
+  ticker_sentiment: AlphaVantageTickerSentiment[];
+}
+
+interface AlphaVantageNewsResponse {
+  items: number;
+  sentiment_score_definition: string;
+  relevance_score_definition: string;
+  feed: AlphaVantageNewsItem[];
+}
+
+// 处理新闻数据
+function processNewsData(data: AlphaVantageNewsResponse) {
+  return data.feed.map(item => ({
+    title: item.title,
+    date: formatDate(item.time_published), // 将 YYYYMMDDTHHMMSS 转换为可读格式
+    sentiment: item.overall_sentiment_label,
+    score: item.overall_sentiment_score,
+    url: item.url,
+    summary: item.summary
+  }));
+}
+
+// 日期格式化辅助函数
+function formatDate(dateString: string): string {
+  // 从 "YYYYMMDDTHHMMSS" 格式转换为易读格式
+  const year = dateString.substring(0, 4);
+  const month = dateString.substring(4, 6);
+  const day = dateString.substring(6, 8);
+  const hour = dateString.substring(9, 11);
+  const minute = dateString.substring(11, 13);
+  
+  return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+```
+
+## 注意事项
+
+1. Alpha Vantage 免费 API 密钥有调用频率限制，通常为 5 次/分钟和 500 次/天
+2. 实现缓存机制可以减少 API 调用次数
+3. 确保正确处理 API 错误响应和速率限制

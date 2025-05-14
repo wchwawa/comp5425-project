@@ -1,5 +1,5 @@
 import { QueryBox } from '@/components/queryBox/QueryBox';
-
+import TradingViewSymbolOverview from '@/components/ui/tradingview-widget/TradingViewSimpleChartWidget';
 export default function Page() {
   return (
     <div className="min-h-screen text-gray-100">
@@ -16,6 +16,8 @@ export default function Page() {
         <div className="grid grid-cols-1 gap-8">
           <QueryBox />
         </div>
+
+
         
         {/* <div className="center mt-10">
           <h1 className="text-xl font-semibold text-center w-full bg-gradient-to-r from-red-400 to-yellow-300 text-transparent bg-clip-text">
