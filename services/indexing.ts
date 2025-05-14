@@ -42,7 +42,7 @@ export async function indexPodcastEpisodes() {
   try{
     const allEpisodesPromises = filteredPodcastSet.map(podcast => {
 
-     try{ return getTranscribedPodcastEpisodes(podcast, 14);}
+     try{ return getTranscribedPodcastEpisodes(podcast, 5);}
      catch(error){
       console.error('Error in indexPodcastEpisodes:', error);
       return [];

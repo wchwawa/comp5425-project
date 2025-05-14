@@ -42,25 +42,33 @@ const vectorStore = new SupabaseVectorStore(embeddings, {
  * embeding the content to emebdding column, and the wrap rest of the fields to json and save to metadata column.
  */
 export async function addDocuments(docs: Array<ContentDocument>) {
-  const documents = docs.map((doc, index) => 
-    new Document({
-      pageContent: doc.content,
-      metadata: {
-        title: doc.title || '',
-        source_url: doc.source_url || '',
-        source_type: doc.source_type || '',
-        description: doc.description || '',
-        tags: doc.tags || [],
-        imageUrl: doc.imageUrl || '',
-        chunk_index: index,
-        raw_data: doc.raw_data || null,
-        author: doc.author || '',
-        upload_time: doc.upload_time || ''
-      }
-    })
-  );
-  await vectorStore.addDocuments(documents);
-  return { success: true, count: documents.length };
+  let totalAddedCount = 0;
+  const chunkSize = 10;
+
+  for (let i = 0; i < docs.length; i += chunkSize) {
+    const chunk = docs.slice(i, i + chunkSize);
+    const documents = chunk.map((doc, index) =>
+      new Document({
+        pageContent: doc.content,
+        metadata: {
+          title: doc.title || '',
+          source_url: doc.source_url || '',
+          source_type: doc.source_type || '',
+          description: doc.description || '',
+          tags: doc.tags || [],
+          imageUrl: doc.imageUrl || '',
+          // chunk_index refers to the index within the original docs array for consistent metadata
+          chunk_index: i + index, 
+          raw_data: doc.raw_data || null,
+          author: doc.author || '',
+          upload_time: doc.upload_time || ''
+        }
+      })
+    );
+    await vectorStore.addDocuments(documents);
+    totalAddedCount += documents.length;
+  }
+  return { success: true, count: totalAddedCount };
 }
 
 /**
