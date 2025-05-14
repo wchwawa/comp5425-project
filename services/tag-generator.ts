@@ -91,48 +91,53 @@ export async function generateTagsForQuery(query: string) : Promise<string[]> {
   });
 
   const runnable = llm.withStructuredOutput(schema);
-  const prompt = `Your task is to perform EXACT MATCHING between a user query and a list of predefined tags.
+  const prompt = `Your task is to perform FUZZY MATCHING between a user query and a list of predefined tags. The goal is to identify existing tags that are semantically similar or closely related to the concepts mentioned in the user query, even if the wording isn't identical.
 
 CRITICAL INSTRUCTIONS:
-1. You must ONLY return tags that appear EXACTLY as they are written in the "Existing Tags" list.
-2. DO NOT modify any tag in any way:
-   - DO NOT add stock symbols like (AAPL) or (TSLA)
-   - DO NOT change capitalization
-   - DO NOT add or remove words
-   - DO NOT create new tags even if they seem relevant
-   - DO NOT combine or split existing tags
+Return Relevant Existing Tags: You should return tags from the "Existing Tags" list that have a strong conceptual overlap with the user query. The match doesn't need to be exact in wording.
 
-3. Matching Process:
-   a. Read the user query carefully
-   b. Look through the list of existing tags
-   c. Select ONLY the tags that directly relate to concepts mentioned in the query
-   d. Return the EXACT tags as they appear in the list - no variations allowed
+Guidelines for Tag Selection:
+Prioritize Semantic Similarity: Focus on the meaning and context. For example, "info on AAPL stock" could fuzzily match an existing tag like "Apple Inc. Share Price".
+Case Insensitivity: Treat "apple", "Apple", and "APPLE" as potentially related to the same concept if an existing tag reflects that.
+Minor Wording Variations: Allow for variations like singular/plural, synonyms, or slightly different phrasing (e.g., "market performance" vs. "Stock Market Trends").
+DO NOT Invent New Tags: Only select tags from the provided "Existing Tags" list. Do not create new tags, even if they seem highly relevant.
+DO NOT Add Extraneous Information: Do not append stock symbols (e.g., (AAPL)) or other details to the tags unless they are part of the existing tag itself.
+DO NOT Combine or Split Existing Tags: Return the tags as they appear in the list.
 
-4. Output Format:
-   - Return only an array of matching tags
-   - If no exact matches exist, return an empty array
-   - Do not explain your reasoning or add commentary
+Matching Process:
+a.  Read the user query carefully to understand the core concepts and intent.
+b.  Review the list of "Existing Tags."
+c.  Select tags from the list that are semantically similar or closely related to the concepts mentioned in the query. Consider synonyms, related terms, and contextual relevance.
+d.  Return the selected tags as they appear in the "Existing Tags" list.
+
+Output Format:
+Return only an array of matching tags from the "Existing Tags" list.
+If no tags are found to be sufficiently similar or relevant, return an empty array.
+Do not explain your reasoning or add commentary.
 
 EXAMPLE:
-User Query: "I'm looking for news about Apple and Tesla stock prices"
-Existing Tags: ["Apple", "Microsoft", "Tesla", "Stock Market", "Revenue"]
-Correct Response: ["Apple", "Tesla", "Stock Market"]
-INCORRECT Response: ["Apple (AAPL)", "Tesla (TSLA)", "Stock Prices"]  ← NEVER DO THIS
+User Query: "I'd like to know about the financial health of Apple and general stock market movements."
+Existing Tags: ["Apple Inc. Financials", "Microsoft Corp.", "Tesla Motors", "Overall Market Performance", "Company Revenue", "Tech Sector News"]
+Correct Response: ["Apple Inc. Financials", "Overall Market Performance"]
+Explanation for understanding (do not include in your actual output):
+* "Apple Inc. Financials" is a good fuzzy match for "financial health of Apple."
+* "Overall Market Performance" is a good fuzzy match for "general stock market movements."
+* Other tags are not as directly relevant or similar.
 
 User Query:
 ---QUERY_START---
 ${query}
 ---QUERY_END---
 
-Existing Tags (ONLY select from this exact list):
+Existing Tags (ONLY select from this list based on fuzzy matching):
 ---EXISTING_TAGS_START---
 ${existingTagsForPrompt}
 ---EXISTING_TAGS_END---
 
-Remember: ONLY return tags that appear EXACTLY AS WRITTEN above. Any deviation from the exact tag text is STRICTLY FORBIDDEN.`;
-  
+Remember: Your goal is to find the most relevant tags from the existing list using fuzzy matching principles. Do not return tags that are not in the list.`;
   try {
     const result = await runnable.invoke(prompt);
+    console.log(result.tags);
     return Array.isArray(result.tags) ? result.tags : [];
   } catch (error) {
     console.error('Error generating tags for query with OpenAI:', error);
