@@ -2,7 +2,7 @@ import { createClient } from "./client";
 
 export async function getTags() {
   const supabase = createClient();
-  const { data, error } = await supabase.from('documents').select('*');
+  const { data, error } = await supabase.from('documents_transcribed').select('*');
   if (error) {
     console.error('Error fetching tags from documents:', error);
     return null;

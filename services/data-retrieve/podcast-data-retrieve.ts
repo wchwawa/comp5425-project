@@ -335,7 +335,7 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
     if (episode.audio_url && transcriptionResult[episode.audio_url]) {
       episode.transcription = transcriptionResult[episode.audio_url];
     }
-    const tags = await generateTagsForDocument(episode.summary);
+    const tags = await generateTagsForDocument(episode.transcription);
     episode.tags = tags;
     await insertAudioTags(tags);
     transcribedEpisodes.push(episode);
