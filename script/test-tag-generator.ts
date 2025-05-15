@@ -1,4 +1,4 @@
-import { generateTagsForDocument, generateTagsForQuery } from "@/services/tag-generator";
+import { generateAudioTags, generateTagsForQuery } from "@/services/tag-generator";
 
 
 async function main() {
@@ -6,7 +6,7 @@ async function main() {
   // console.log(tags);
   // const isTagsArray = Array.isArray(tags);
   // console.log('is outTagsArray', isTagsArray);
-  const tags = await generateTagsForQuery('Any Chinese market news?');
+  const tags = await generateAudioTags('Any Chinese market news?');
   console.log(tags);
 }
 

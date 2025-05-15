@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getNewsSentiment, processNewsData } from "@/services/alpha-vantage";
-import { generateSymbolForAlphaVantageNewsSentiment } from "@/services/ticker-generator";
+import { generateTagsForQuery } from "@/services/tag-generator";
+import { rag } from "@/services/rag";
+import { ContentDocument } from "@/types/document";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const { query } = await request.json();
-  const ticker = await generateSymbolForAlphaVantageNewsSentiment(query);
-
-  console.log('API:', ticker);
-  if (!ticker || ticker.tickers.length === 0) {
-    return NextResponse.json({ error: "invalid ticker found, please try other query" }, { status: 400 });
-  }
-  const rawNewsData = await getNewsSentiment(ticker.tickers);
-  // Process the news data
-  const processedNews = processNewsData(rawNewsData);
-
-  return NextResponse.json({ news: processedNews }); // Return processed news
+  const tags = await generateTagsForQuery(query, "news");
+  console.log("Fetching news: get tags for query", tags)
+  const news: ContentDocument[] = await rag(query, { tags, limit: 5, source_type: "news" });
+  console.log("Fetching news: get news for query", news)
+  return NextResponse.json({ news: news });
 }
 
