@@ -27,22 +27,12 @@ const vectorStore = new SupabaseVectorStore(embeddings, {
 });
 
 /**
- * add docs to vector store
- * @param docs - array of documents is an array of objects with the following properties:
- * {
- *   content: string,
- *   title?: string,
- *   source_url?: string,
- *   source_type?: string,
- *   tags?: string[],
- *   raw_data?: any,
- *   description?: string
- * }
- * @description - this fuction will send the docs to supabase vector store, 
- * embeding the content to emebdding column, and the wrap rest of the fields to json and save to metadata column.
+ * Adds an array of ContentDocument objects to the vector store.
+ * Embeds the content and stores metadata.
+ * @param docs - Array of ContentDocument objects.
  */
-export async function embeddingPodcastDocuments(docs: Array<ContentDocument>) {
-  const documents = docs.map((doc, index) => 
+export async function embeddingContentDocuments(docs: Array<ContentDocument>, batchSize: number = 100) {
+  const documentsToEmbed = docs.map((doc, index) => 
     new Document({
       pageContent: doc.content,
       metadata: {
@@ -52,23 +42,39 @@ export async function embeddingPodcastDocuments(docs: Array<ContentDocument>) {
         description: doc.description || '',
         tags: doc.tags || [],
         imageUrl: doc.imageUrl || '',
-        chunk_index: index,
+        chunk_index: index, 
         raw_data: doc.raw_data || null,
         author: doc.author || '',
         upload_time: doc.upload_time || ''
       }
     })
   );
-  await vectorStore.addDocuments(documents);
-  return { success: true, count: documents.length };
+
+  let successfulEmbeddings = 0;
+  for (let i = 0; i < documentsToEmbed.length; i += batchSize) {
+    const batch = documentsToEmbed.slice(i, i + batchSize);
+    try {
+      await vectorStore.addDocuments(batch);
+      successfulEmbeddings += batch.length;
+      console.log(`Successfully embedded batch ${i / batchSize + 1}, ${batch.length} documents. Total successful: ${successfulEmbeddings}`);
+    } catch (error) {
+      console.error(`Error embedding batch starting at index ${i}:`, error);
+      // Decide if you want to stop on error or continue with next batches
+      // For now, we'll log and continue, but you might want to throw the error
+      // throw error; 
+    }
+  }
+  
+  console.log(`Embedding process completed. Total successfully embedded documents: ${successfulEmbeddings}`);
+  return { success: successfulEmbeddings === documentsToEmbed.length, count: successfulEmbeddings };
 }
 
 /**
  * return rag result
  */
-export async function rag(query: string, options = { limit: 3, tags: undefined as string[] | undefined }): Promise<ContentDocument[]> {
+export async function rag(query: string, options = { limit: 3, tags: undefined as string[] | undefined, source_type: undefined as string | undefined }): Promise<ContentDocument[]> {
   // build filter
-  const filter = options.tags?.length ? { tags: options.tags } : undefined;
+  const filter = options.tags?.length ? { tags: options.tags, source_type: options.source_type } : undefined;
   
   // retrieve related docs
   const docs = await vectorStore.similaritySearch(query, options.limit, filter);

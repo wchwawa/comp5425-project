@@ -1,11 +1,11 @@
 import { AlphaVantage } from '../types/alphavantage';
 
 /**
- * 获取特定股票的新闻情绪数据
+ * 获取特定主题的新闻情绪数据
  */
 export async function getNewsSentiment(
-  ticker: string,
-  limit: number = 5
+  topics?: string, // Changed from ticker, topics is now a single string
+  limit: number = 1000,
 ): Promise<AlphaVantage.NewsSentimentResponse> {
   const apiKey = process.env.ALPHA_VANTAGE_API_KEY as string;
   
@@ -13,12 +13,13 @@ export async function getNewsSentiment(
     throw new Error('Alpha Vantage API密钥未设置。请在环境变量中设置ALPHA_VANTAGE_API_KEY。');
   }
   
-  // 移除所有空格，确保ticker格式正确
-  const formattedTicker = ticker.replace(/\s+/g, '');
-  
+  // topics string is used directly as per Alpha Vantage documentation for a single or comma-separated topics
+  // No need to format topics if it's already a correctly formatted string.
+
   const params: Partial<AlphaVantage.NewsSentimentParams> = {
     function: 'NEWS_SENTIMENT',
-    tickers: formattedTicker,
+    topics: topics, // Use the topics string directly
+    // tickers?: ticker, // not used for index news data
     limit,
     apikey: apiKey
   };
@@ -27,11 +28,11 @@ export async function getNewsSentiment(
     .map(([key, value]) => `${key}=${value}`)
     .join('&');
   
-  console.log("queryString for news sentiment api",queryString);
+  console.log("queryString for news sentiment api", queryString);
     
   const url = `https://www.alphavantage.co/query?${queryString}`;
 
-  console.log("url for news sentiment api",url);
+  console.log("url for news sentiment api", url);
   
   try {
     const response = await fetch(url, {
@@ -42,7 +43,15 @@ export async function getNewsSentiment(
     });
     
     if (!response.ok) {
-      throw new Error(`Alpha Vantage API错误: ${response.status}`);
+      // Try to get more detailed error from Alpha Vantage if possible
+      let errorMessage = `Alpha Vantage API错误: ${response.status}`;
+      try {
+        const errorBody = await response.json();
+        errorMessage += ` - ${errorBody.Information || errorBody.Note || JSON.stringify(errorBody)}`;
+      } catch (e) {
+        // Ignore if an error occurs while parsing error body
+      }
+      throw new Error(errorMessage);
     }
     
     return response.json() as Promise<AlphaVantage.NewsSentimentResponse>;

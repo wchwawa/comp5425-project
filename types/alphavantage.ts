@@ -26,13 +26,13 @@ export namespace AlphaVantage {
 
   export interface Topic {
     topic: string;
-    relevance_score: number; // 0-1 范围
+    relevance_score: string; // 0-1 范围
   }
 
   export interface TickerSentiment {
     ticker: string;
-    relevance_score: number; // 0-1 范围
-    ticker_sentiment_score: number; // 通常为 -1 到 1 范围
+    relevance_score: string; // 0-1 范围
+    ticker_sentiment_score: string; // 通常为 -1 到 1 范围
     ticker_sentiment_label: SentimentLabel;
   }
 

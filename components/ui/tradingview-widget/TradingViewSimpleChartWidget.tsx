@@ -27,10 +27,21 @@ function TradingViewSymbolOverviewWidget({ stockSymbols }: Props) {
     // 如果 stockSymbols 无效或为空，则不创建脚本
     if (!stockSymbols || stockSymbols.length === 0) {
       console.log(
-        'TradingViewWidget: stockSymbols are empty or undefined, skipping script creation.'
+        'TradingViewWidget: stockSymbols are empty or undefined, showing default content.'
       );
-      // 可选: 显示一些占位符或提示信息
-      // container.current.innerHTML = '<p>No symbols to display.</p>';
+
+      // 显示默认内容
+      const defaultContent = document.createElement('div');
+      defaultContent.className =
+        'flex items-center justify-center h-full flex-col text-center p-4';
+      defaultContent.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <p class="text-gray-400 text-sm">No chart data available</p>
+        <p class="text-xs text-gray-500">Search for a stock symbol to display chart</p>
+      `;
+      container.current.appendChild(defaultContent);
       return;
     }
 
@@ -39,10 +50,17 @@ function TradingViewSymbolOverviewWidget({ stockSymbols }: Props) {
       stockSymbols
     );
 
-    const formattedSymbolsForWidget = stockSymbols.map((symbolArray) => {
+    // 这里我们确保至少有一个默认符号供 widget 使用
+    let formattedSymbolsForWidget = stockSymbols.map((symbolArray) => {
       const ticker = symbolArray[0];
       return [`${ticker}|1D`];
     });
+
+    // 如果没有符号，添加一个默认符号
+    if (formattedSymbolsForWidget.length === 0) {
+      formattedSymbolsForWidget = [['AAPL|1D']];
+    }
+
     console.log(
       'TradingViewWidget: Formatted symbols for widget:',
       formattedSymbolsForWidget
@@ -58,11 +76,11 @@ function TradingViewSymbolOverviewWidget({ stockSymbols }: Props) {
         "symbols": ${JSON.stringify(formattedSymbolsForWidget)},
         "chartOnly": false,
         "width": "100%",
-        "height": "500", 
+        "height": "100%",
         "locale": "en",
         "colorTheme": "dark",
         "autosize": true,
-        "showVolume": false,
+        "showVolume": true,
         "showMA": false,
         "hideDateRanges": false,
         "hideMarketStatus": false,
@@ -70,15 +88,15 @@ function TradingViewSymbolOverviewWidget({ stockSymbols }: Props) {
         "scalePosition": "right",
         "scaleMode": "Normal",
         "fontFamily": "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
-        "fontSize": "10",
+        "fontSize": "8",
         "noTimeScale": false,
         "valuesTracking": "1",
         "changeMode": "price-and-percent",
-        "chartType": "area",
+        "chartType": "bars",
         "maLineColor": "#2962FF",
         "maLineWidth": 1,
         "maLength": 9,
-        "headerFontSize": "medium",
+        "headerFontSize": "small",
         "lineWidth": 2,
         "lineType": 0,
         "dateRanges": [
@@ -94,31 +112,23 @@ function TradingViewSymbolOverviewWidget({ stockSymbols }: Props) {
     container.current.appendChild(script);
     console.log('TradingViewWidget: Script appended.');
 
-    // 清理函数：当组件卸载或 stockSymbols 变化导致 effect 重新运行时，此函数会先执行
+    // 清理函数
     return () => {
       if (container.current) {
-        // 移除脚本和由脚本创建的widget内容
-        // container.current.innerHTML = ''; // 已经在 effect 开始时清理了
         console.log(
           'TradingViewWidget: useEffect cleanup triggered for unmount or stockSymbols change.'
         );
       }
     };
-  }, [stockSymbols]); // <--- 将 stockSymbols 添加到依赖数组
+  }, [stockSymbols]); // 依赖于 stockSymbols
 
   return (
     <div
-      className="tradingview-widget-container"
+      className="tradingview-widget-container w-full h-full min-h-[150px] lg:px-3"
       ref={container}
-      style={{ height: '500px', width: '100%' }} // 明确设置容器尺寸
+      style={{ height: '100%', width: '100%' }}
     >
       {/* TradingView 脚本会填充这个区域 */}
-      {/* <div className="tradingview-widget-container__widget"></div> */}
-      {/* <div className="tradingview-widget-copyright">
-        <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
-          <span className="blue-text">Track all markets on TradingView</span>
-        </a>
-      </div> */}
     </div>
   );
 }

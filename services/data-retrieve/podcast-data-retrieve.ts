@@ -6,7 +6,7 @@ import path from 'path'; // Added for path manipulation
 import os from 'os'; // Added for temporary directory
 import { exec } from 'child_process'; // Added for running ffmpeg
 import { promisify } from 'util'; // Added for promisifying exec
-import { generateTagsForDocument } from '../tag-generator';
+import { generateAudioTags} from '../tag-generator';
 import { insertAudioTags } from '@/utils/supabase/queries';
 const execAsync = promisify(exec); // Promisify exec for async/await usage
 
@@ -316,7 +316,8 @@ Transcribing Episode: ${episode.title || 'N/A'} from ${episode.audio_url}`);
       // transcriptionText = await transcribeAudio(episode.audio_url);
       transcriptionText = 'saving time so placeholder';
       episode.transcription = transcriptionText || 'Transcription failed or N/A';
-      const tags = await generateTagsForDocument(episode.summary);
+      
+      const tags = await generateAudioTags(episode.summary);
       episode.tags = tags;
       await insertAudioTags(tags);
 

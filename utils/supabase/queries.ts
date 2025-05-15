@@ -76,24 +76,21 @@ export async function insertAudioTags(newTags: string[]) {
 
   // 2. Combine existing tags with new tags, remove duplicates, and sort.
   const combinedTags = [...existingTags, ...newTags];
-  const updatedUniqueSortedTags = Array.from(new Set(combinedTags)).sort();
+  const updatedUniqueSortedTags = Array.from(new Set(combinedTags.map(tag => tag.toLowerCase().trim()).filter(tag => tag.length > 0))).sort();
 
-  // 3. Update the data in the tags_collection table.
-  // Since we can't rely on onConflict with 'type', we'll use an update where type='audio'
-  // We know from getAudioTags that the audio row exists with id=1
+  // 3. Upsert the data in the tags_collection table for 'audio' type.
   const { data: updatedData, error: updateError } = await supabase
     .from('tags_collection')
-    .update({ tags: updatedUniqueSortedTags })
-    .eq('type', AUDIO_TYPE)
+    .upsert({ type: AUDIO_TYPE, tags: updatedUniqueSortedTags }, { onConflict: 'type' })
     .select();
 
   if (updateError) {
-    console.error(`Error updating tags for type '${AUDIO_TYPE}':`, updateError);
+    console.error(`Error upserting tags for type '${AUDIO_TYPE}':`, updateError);
     return null;
   }
 
   console.log(`Tags for type '${AUDIO_TYPE}' updated. Total unique tags: ${updatedUniqueSortedTags.length}`);
-  return updatedData.length > 0 ? updatedData[0] : null;
+  return updatedData && updatedData.length > 0 ? updatedData[0] : null;
 }
 
 /**

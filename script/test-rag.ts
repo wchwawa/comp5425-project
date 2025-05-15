@@ -1,26 +1,24 @@
-import { embeddingPodcastDocuments, rag, queryRag } from '@/services/rag';
+import { rag } from '@/services/rag';
 import { generateTagsForQuery } from '@/services/tag-generator';
-
-
 async function main() {
   
   // RAG retrieval with tag filtering
   console.log("\n> Test 3: RAG Retrieval with Tag Filtering");
-  const query2 = "Any news about Apple or Tesla or China market or US market or Bitcoin or Ethereum?";
-  const tags = await generateTagsForQuery(query2);
+  const query2 = "Any news about Apple?";
+  const tags = await generateTagsForQuery(query2, "news");
   console.log(`Query: "${query2}" (Filter tags: ${tags.join(', ')})`);
   
   try {
     const filteredResult = await rag(query2, { 
-      limit: 10, 
-      tags: tags
+      limit: 5, 
+      tags: tags,
+      source_type: "news" //or news
     });
     console.log("Retrieved context:");
     // console.log('=========================filtered Result=============================', filteredResult);
     console.log("\nNumber of sources:", filteredResult.length);
     filteredResult.forEach(item => {
-      console.log('=========================author=============================', item.author);
-      console.log('=========================upload_time=============================', item.upload_time);
+      console.log('=========================item=============================', item);
     });
     if (filteredResult.length > 0) {
       console.log("First source tags:", filteredResult[0].tags);
