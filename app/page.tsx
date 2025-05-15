@@ -1,5 +1,4 @@
 import { QueryBox } from '@/components/queryBox/QueryBox';
-import AudioPlayer from '@/components/AudioPlayer/AudioPlayer';
 // Removed unused import: import TradingViewSymbolOverview from '@/components/ui/tradingview-widget/TradingViewSimpleChartWidget';
 export default function Page() {
   return (
