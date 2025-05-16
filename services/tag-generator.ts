@@ -1,20 +1,20 @@
 import { ChatOpenAI } from "@langchain/openai"
 import {z} from "zod"
-import { getAudioTags } from "@/utils/supabase/queries"
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getAudioTags, getNewsTags } from "@/utils/supabase/queries"
+
 /**
  * 
  * @param podcastContent 
  * @returns  
  * @description generate tags for podcast content, used for filtering docs
  */
-export async function generateTagsForDocument(podcastContent: string | undefined) : Promise<string[]> {
+export async function generateAudioTags(podcastContent: string | undefined) : Promise<string[]> {
   const schema = z.object({
     tags: z.array(z.string()),
   });
   const llm = new ChatOpenAI({
-    model: "gpt-4.1",
-    temperature: 0,
+    model: "gpt-4.1-nano",
+    temperature: 0.5,
   });
 
   const runnable = llm.withStructuredOutput(schema);
@@ -68,8 +68,66 @@ ${podcastContent}
   }
 }
 
+/**
+ * Generates a limited number of specific and relevant tags for news content,
+ * focusing on stock market and finance-related concepts.
+ * Aims for fewer than 5 high-quality tags.
+ *
+ * @param newsContent The content of the news article.
+ * @returns A promise that resolves to an array of strings, representing the generated tags.
+ */
+export async function generateNewsTags(newsContent: string | undefined): Promise<string[]> {
+  const schema = z.object({
+    tags: z.array(z.string()),
+  });
+  const llm = new ChatOpenAI({
+    model: "gpt-4.1-nano", // Consider gpt-3.5-turbo if cost/speed is a concern for shorter lists
+    temperature: 0.5,
+  });
 
-export async function generateTagsForQuery(query: string) : Promise<string[]> {
+  const runnable = llm.withStructuredOutput(schema);
+  if (!newsContent || typeof newsContent !== 'string' || newsContent.trim() === '') {
+    console.log('News content is undefined, empty, or not a string');
+    return [];
+  }
+
+  const prompt = `Your task is to extract a few highly specific and relevant tags from the provided news text.
+Focus exclusively on stock market and finance-related concepts.
+
+Instructions:
+1.  **Relevance is key**: Only extract tags directly and clearly supported by the text.
+2.  **Specificity**: Prefer specific entities (e.g., company names like "Apple", "Tesla"; stock tickers like "NVDA"), financial instruments (e.g., "ETFs", "bonds"), key economic indicators (e.g., "inflation", "interest rates"), and precise market concepts. Avoid overly broad terms.
+3.  **Quantity**: Aim for **at least 5 high-quality tags**. Brevity and impact are important. If the text doesn't contain enough relevant concepts for even 1-2 tags, provide as many as you can find. Do not invent or force tags.
+4.  **Format**: Tags should be concise, typically 1-3 words.
+
+Example Tags (illustrative, adapt to content):
+-   Nvidia
+-   NVDA
+-   American Stock Market
+-   Medicine Market
+-   
+-   Interest Rate Hike
+-   Tesla Earnings
+-   IPO Market
+
+Text to process:
+---TEXT_START---
+${newsContent}
+---TEXT_END---
+`;
+
+  try {
+    const result = await runnable.invoke(prompt);
+    // Ensure the number of tags does not exceed 5, though the prompt already guides this.
+    const limitedTags = Array.isArray(result.tags) ? result.tags.slice(0, 5) : [];
+    return limitedTags;
+  } catch (error) {
+    console.error('Error generating news tags with OpenAI:', error);
+    return [];
+  }
+}
+
+export async function generateTagsForQuery(query: string, source_type: string) : Promise<string[]> {
   const schema = z.object({
     tags: z.array(z.string()),
   });
@@ -79,15 +137,26 @@ export async function generateTagsForQuery(query: string) : Promise<string[]> {
     return [];
   }
 
-  const audioTagData = await getAudioTags();
+  let existingTagsForPrompt: string;
 
-  const existingTagsForPrompt = audioTagData?.tags?.length 
+  if (source_type === "news") {
+    const newsTagData = await getNewsTags();
+    existingTagsForPrompt = newsTagData?.tags?.length 
+      ? newsTagData.tags.join(', ') 
+      : 'No existing tags available to select from.';
+  } else if (source_type === "podcast") {
+    const audioTagData = await getAudioTags();
+    existingTagsForPrompt = audioTagData?.tags?.length 
       ? audioTagData.tags.join(', ') 
       : 'No existing tags available to select from.';
-
+  } else {
+    console.warn(`Unknown source_type: "${source_type}". Using generic prompt instructions.`);
+    existingTagsForPrompt = 'No specific pre-existing tags available for this source type. Please identify relevant financial and stock market tags from the query based on general knowledge.';
+  }
+  
   const llm = new ChatOpenAI({
     model: "gpt-4.1",
-    temperature: 0,
+    temperature: 0.8,
   });
 
   const runnable = llm.withStructuredOutput(schema);
@@ -135,6 +204,7 @@ ${existingTagsForPrompt}
 ---EXISTING_TAGS_END---
 
 Remember: Your goal is to find the most relevant tags from the existing list using fuzzy matching principles. Do not return tags that are not in the list.`;
+  
   try {
     const result = await runnable.invoke(prompt);
     console.log(result.tags);

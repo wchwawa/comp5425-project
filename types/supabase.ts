@@ -51,6 +51,48 @@ export type Database = {
         }
         Relationships: []
       }
+      documents_transcribed: {
+        Row: {
+          chunk_index: number | null
+          content: string | null
+          created_at: string | null
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          raw_data: Json | null
+          source_type: string | null
+          source_url: string | null
+          tags: string[] | null
+          title: string | null
+        }
+        Insert: {
+          chunk_index?: number | null
+          content?: string | null
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          raw_data?: Json | null
+          source_type?: string | null
+          source_url?: string | null
+          tags?: string[] | null
+          title?: string | null
+        }
+        Update: {
+          chunk_index?: number | null
+          content?: string | null
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          raw_data?: Json | null
+          source_type?: string | null
+          source_url?: string | null
+          tags?: string[] | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       tags_collection: {
         Row: {
           id: number
@@ -131,7 +173,7 @@ export type Database = {
         Returns: unknown
       }
       match_documents: {
-        Args: { query_embedding: string; match_count?: number; filter?: Json }
+        Args: { query_embedding: string; match_count: number; filter?: Json }
         Returns: {
           id: string
           title: string

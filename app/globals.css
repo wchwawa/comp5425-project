@@ -67,3 +67,33 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* React Resizable Styles */
+.react-resizable {
+  position: relative;
+}
+
+.react-resizable-handle {
+  position: absolute;
+  background-repeat: no-repeat;
+  background-origin: content-box;
+  box-sizing: border-box;
+  background-position: bottom right;
+  padding: 0 3px 3px 0;
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+
+.react-resizable-handle:hover {
+  opacity: 1;
+}
+
+.react-resizable-handle-s {
+  height: 10px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  cursor: row-resize;
+  border-radius: 0 0 8px 8px;
+}

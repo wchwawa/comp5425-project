@@ -6,7 +6,7 @@ import path from 'path'; // Added for path manipulation
 import os from 'os'; // Added for temporary directory
 import { exec } from 'child_process'; // Added for running ffmpeg
 import { promisify } from 'util'; // Added for promisifying exec
-import { generateTagsForDocument } from '../tag-generator';
+import { generateAudioTags} from '../tag-generator';
 import { insertAudioTags } from '@/utils/supabase/queries';
 import { transcribeAudioFromUrls } from '../podcast-transcribe-azure';
 import { createClient } from '@/utils/supabase/client';
@@ -335,7 +335,7 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
     if (episode.audio_url && transcriptionResult[episode.audio_url]) {
       episode.transcription = transcriptionResult[episode.audio_url];
     }
-    const tags = await generateTagsForDocument(episode.transcription);
+    const tags = await generateAudioTags(episode.transcription);
     episode.tags = tags;
     await insertAudioTags(tags);
     transcribedEpisodes.push(episode);
