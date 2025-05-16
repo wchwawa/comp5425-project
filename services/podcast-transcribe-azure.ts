@@ -186,7 +186,11 @@ async function getTranscriptionFiles(
       if (fileResponse.ok) {
         const fileJson = await fileResponse.json();
         // Try to extract transcription text in a simple way
-        transcription = fileJson.combinedRecognizedPhrases[0].lexical;
+        if (Array.isArray(fileJson.combinedRecognizedPhrases) && fileJson.combinedRecognizedPhrases.length > 0) {
+          transcription = fileJson.combinedRecognizedPhrases[0].lexical;
+        } else {
+          transcription = 'No recognized phrases found';
+        }
         source = fileJson.source;
       } else {
         transcription = `Failed to fetch transcription content: ${fileResponse.status}`;
