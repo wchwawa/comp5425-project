@@ -59,7 +59,7 @@ export async function indexPodcastEpisodes(countPerPodcast: number = 14) {
       
       if (docsToEmbed.length > 0) {
         console.log(`Embedding ${docsToEmbed.length} documents for podcast: ${podcast}`);
-        await embeddingContentDocuments(docsToEmbed);
+        await embeddingContentDocuments(docsToEmbed,10,'podcast');
         console.log(`Successfully embedded documents for podcast: ${podcast}`);
       } else {
         console.log(`No documents to embed for podcast: ${podcast}`);
@@ -98,7 +98,7 @@ export async function indexNewsData(limitPerTopic: number = 50, topics: string[]
 
     if (allNewsDocs.length > 0) {
       console.log(`Embedding ${allNewsDocs.length} total news documents.`);
-      await embeddingContentDocuments(allNewsDocs);
+      await embeddingContentDocuments(allNewsDocs,10,'news');
       console.log('Successfully embedded all news documents.');
     } else {
       console.log('No news documents to embed in total.');

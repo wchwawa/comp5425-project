@@ -180,6 +180,7 @@ c.  Select tags from the list that are semantically similar or closely related t
 d.  Return the selected tags as they appear in the "Existing Tags" list.
 
 Output Format:
+You should return at least 10 tags for the query, ranking them by relevance to the query.
 Return only an array of matching tags from the "Existing Tags" list.
 If no tags are found to be sufficiently similar or relevant, return an empty array.
 Do not explain your reasoning or add commentary.

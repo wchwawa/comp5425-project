@@ -20,8 +20,9 @@ TASK
 Given a natural-language **Query**, output **only** a single line of valid JSON with a "stocks" array containing multiple relevant stock tickers:
 
 Each stock in the array should have:
-  • "symbol" - the exact ticker (case-sensitive, no extra text), combined with the market, e.g.["NASDAQ:AAPL","NYSE:BTC","BINANCE:ETH","NASDAQ:COIN","SSE:600519","NYSE:TSLA","NYSE:NIO","SZSE:002594","NYSE:PFIZER","NYSE:JNJ","NYSE:ABBV"]
+  • "symbol" - the exact ticker (case-sensitive, no extra text), combined with the market, e.g.["NASDAQ:AAPL","NYSE:BTC","NYSE:DELL","BINANCE:ETH","NASDAQ:COIN","SSE:600519","NYSE:TSLA","NYSE:NIO","SZSE:002594","NYSE:PFIZER","NYSE:JNJ","NYSE:ABBV"]
 
+The symbols should be valid for TradingView chart.
 Return at least 2-3 relevant stocks when possible.
 Output nothing else (no markdown, comments, or trailing characters).
 
