@@ -1,6 +1,6 @@
 import { generateTagsForQuery } from "@/services/tag-generator";
 import { NextRequest, NextResponse } from "next/server";
-import { rag, queryRag } from "@/services/rag";
+import { rag, } from "@/services/rag";
 import { generateSummary } from "@/services/summary-generator";
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const { query } = await request.json();
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const tags = await generateTagsForQuery(query, "podcast");
   
   // retrieve podcast documents, filter by tags first, then retrieve the top-2 relevant podcasts by rag
-  const matchedPodcastDocuments = await rag(query, { tags, limit: 2, source_type: "podcast" });
+  const matchedPodcastDocuments = await rag(query, { tags, limit: 4, source_type: "podcast" });
 
   // generate summary for each podcast
   for (const podcast of matchedPodcastDocuments) {

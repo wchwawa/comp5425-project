@@ -8,6 +8,8 @@ import { exec } from 'child_process'; // Added for running ffmpeg
 import { promisify } from 'util'; // Added for promisifying exec
 import { generateAudioTags} from '../tag-generator';
 import { insertAudioTags } from '@/utils/supabase/queries';
+import { transcribeAudioFromUrls } from '../podcast-transcribe-azure';
+import { createClient } from '@/utils/supabase/client';
 const execAsync = promisify(exec); // Promisify exec for async/await usage
 
 const OPENAI_MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
@@ -109,6 +111,7 @@ async function compressAudio(inputPath: string, outputPath: string, tempo: numbe
   console.log(`Attempting to compress audio with command: ${ffmpegCommand}`);
   try {
     const { stdout, stderr } = await execAsync(ffmpegCommand);
+
     if (stderr && !stderr.includes('Output file #0 does not contain any stream')) { // ffmpeg can output to stderr on success
       // Check for known "success" messages or patterns in stderr if necessary
       // For now, we'll consider stderr content (not matching specific non-errors) as a potential issue
@@ -129,7 +132,7 @@ async function compressAudio(inputPath: string, outputPath: string, tempo: numbe
       return false;
     }
   } catch (error) {
-    console.error('Error during ffmpeg compression:', error);
+    console.error(`Error during ffmpeg compression:`, error);
     return false;
   }
 }
@@ -214,7 +217,7 @@ async function transcribeAudio(audioUrl: string): Promise<string | null> {
       model: "whisper-1",
       response_format: "text",
     });
-    console.log("Transcription finished.");
+    console.log(`Transcription finished.`);
 
     return transcription as unknown as string;
 
@@ -255,6 +258,7 @@ async function getPodcastRssUrl(podcastName: string): Promise<string | null> {
   try {
     const searchTerm = encodeURIComponent(podcastName);
     const searchUrl = `https://itunes.apple.com/search?term=${searchTerm}&entity=podcast&limit=1`;
+    console.log(`Searching for podcast: ${searchUrl}`);
     const response = await fetch(searchUrl, { method: 'GET' });
 
     if (!response.ok) {
@@ -278,10 +282,13 @@ async function getPodcastRssUrl(podcastName: string): Promise<string | null> {
     return null;
   }
 }
+async function GetExistingPodcasts() {
+  const supabase = await createClient();
+  const { data: documents_transcribed } = await supabase.from("documents_transcribed").select();
+  return documents_transcribed?.map((item) => item.metadata.title);
+}
 
 /**
- * TODO 
- * Link to VectorDB to avoid duplicate record
  * Fetches, transcribes, and returns a specified number of podcast episodes from an RSS feed.
  *
  * @param rssFeedUrl The URL of the podcast's RSS feed.
@@ -296,7 +303,7 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
     console.log(`No RSS feed found for podcast: ${podcastsName}`);
     return [];
   }
-  console.log(`RSS feed URL: ${rssFeedUrl}`);
+  const existingPodcasts = await GetExistingPodcasts();
   const allEpisodes = await fetchPodcastEpisodes(rssFeedUrl);
 
   if (!allEpisodes || allEpisodes.length === 0) {
@@ -305,26 +312,32 @@ export async function getTranscribedPodcastEpisodes(podcastsName: string, count:
   }
 
   console.log(`Fetched ${allEpisodes.length} total episodes. Processing the latest ${Math.min(count, allEpisodes.length)}.`);
-  const episodesToTranscribe = allEpisodes.slice(0, Math.min(count, allEpisodes.length));
+  let episodesToTranscribe: EpisodeData[] = [];
+  if (existingPodcasts && existingPodcasts.length > 0) {
+    episodesToTranscribe = allEpisodes.slice(0, Math.min(count, allEpisodes.length));
+    episodesToTranscribe = episodesToTranscribe.filter((episode) => !existingPodcasts.includes(episode.title));
+  } else {
+    episodesToTranscribe = allEpisodes.slice(0, Math.min(count, allEpisodes.length));
+  }
+  // console.log(`existingPodcasts: ${existingPodcasts}`);
+  // console.log(`episodesToTranscribe: ${episodesToTranscribe.map((item) => item.title)}`);
+  if (episodesToTranscribe.length === 0) {
+    console.log("No episodes to transcribe.");
+    return [];
+  }
   const transcribedEpisodes: EpisodeData[] = [];
-
+  const audioUrls = episodesToTranscribe
+    .map(episode => episode.audio_url)
+    .filter((url): url is string => url !== undefined);
+  console.log(`Transcribing ${audioUrls.length} episodes..., urls: ${audioUrls}`);
+  const transcriptionResult = await transcribeAudioFromUrls(audioUrls);
   for (const episode of episodesToTranscribe) {
-    let transcriptionText: string | null = 'No audio URL or transcription not attempted.';
-    if (episode.audio_url) {
-      console.log(`
-Transcribing Episode: ${episode.title || 'N/A'} from ${episode.audio_url}`);
-      // transcriptionText = await transcribeAudio(episode.audio_url);
-      transcriptionText = 'saving time so placeholder';
-      episode.transcription = transcriptionText || 'Transcription failed or N/A';
-      
-      const tags = await generateAudioTags(episode.summary);
-      episode.tags = tags;
-      await insertAudioTags(tags);
-
-    } else {
-      console.log(`Skipping transcription for Episode: ${episode.title || 'N/A'} (no audio URL)`);
-      episode.transcription = 'No audio URL provided.';
+    if (episode.audio_url && transcriptionResult[episode.audio_url]) {
+      episode.transcription = transcriptionResult[episode.audio_url];
     }
+    const tags = await generateAudioTags(episode.transcription);
+    episode.tags = tags;
+    await insertAudioTags(tags);
     transcribedEpisodes.push(episode);
   }
 

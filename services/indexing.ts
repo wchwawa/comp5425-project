@@ -44,7 +44,7 @@ export async function indexPodcastEpisodes(countPerPodcast: number = 14) {
         const summary = episode.summary?.trim() || 'no summary';
         const tags = episode.tags || [];
         docsToEmbed.push({
-          content: summary,
+          content: episode.transcription?.slice(0, 8100) || '',
           title: episode.title || 'Untitled Episode',
           source_url: episode.audio_url || '',
           source_type: 'podcast',
@@ -53,13 +53,13 @@ export async function indexPodcastEpisodes(countPerPodcast: number = 14) {
           imageUrl: episode.imageUrl || '',
           author: episode.author || '',
           upload_time: episode.isoDate || '',
-          raw_data: episode
+          raw_data: episode.transcription || ''
         });
       }
       
       if (docsToEmbed.length > 0) {
         console.log(`Embedding ${docsToEmbed.length} documents for podcast: ${podcast}`);
-        await embeddingContentDocuments(docsToEmbed);
+        await embeddingContentDocuments(docsToEmbed,10,'podcast');
         console.log(`Successfully embedded documents for podcast: ${podcast}`);
       } else {
         console.log(`No documents to embed for podcast: ${podcast}`);
@@ -98,7 +98,7 @@ export async function indexNewsData(limitPerTopic: number = 50, topics: string[]
 
     if (allNewsDocs.length > 0) {
       console.log(`Embedding ${allNewsDocs.length} total news documents.`);
-      await embeddingContentDocuments(allNewsDocs);
+      await embeddingContentDocuments(allNewsDocs,10,'news');
       console.log('Successfully embedded all news documents.');
     } else {
       console.log('No news documents to embed in total.');

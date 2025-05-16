@@ -270,7 +270,7 @@ async function main() {
 
     if (allNewsDocsToEmbed.length > 0) {
       console.log(`\nEmbedding ${allNewsDocsToEmbed.length} processed news documents...`);
-      const embeddingResult = await embeddingContentDocuments(allNewsDocsToEmbed);
+      const embeddingResult = await embeddingContentDocuments(allNewsDocsToEmbed,100,'news');
       console.log(`Embedding complete. Result: ${JSON.stringify(embeddingResult)}`);
     } else {
       console.log("No news documents were processed to embed.");
