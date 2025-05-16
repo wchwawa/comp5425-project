@@ -1,6 +1,8 @@
 import { ChatOpenAI } from "@langchain/openai"
 import {z} from "zod"
 import { getAudioTags, getNewsTags } from "@/utils/supabase/queries"
+import {GoogleGenAI} from '@google/genai';
+import { Type } from '@google/genai';
 
 /**
  * 
@@ -77,27 +79,45 @@ ${podcastContent}
  * @returns A promise that resolves to an array of strings, representing the generated tags.
  */
 export async function generateNewsTags(newsContent: string | undefined): Promise<string[]> {
-  const schema = z.object({
-    tags: z.array(z.string()),
-  });
-  const llm = new ChatOpenAI({
-    model: "gpt-4.1-nano", // Consider gpt-3.5-turbo if cost/speed is a concern for shorter lists
-    temperature: 0.5,
-  });
-
-  const runnable = llm.withStructuredOutput(schema);
   if (!newsContent || typeof newsContent !== 'string' || newsContent.trim() === '') {
     console.log('News content is undefined, empty, or not a string');
     return [];
   }
 
-  const prompt = `Your task is to extract a few highly specific and relevant tags from the provided news text.
+  try {
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+    });
+    
+    const config = {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        required: ["tags"],
+        properties: {
+          tags: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.STRING,
+            },
+          },
+        },
+      },
+    };
+    
+    const model = 'gemini-2.5-flash-preview-04-17';
+    const contents = [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: `Your task is to extract a few highly specific and relevant tags from the provided news text.
 Focus exclusively on stock market and finance-related concepts.
 
 Instructions:
 1.  **Relevance is key**: Only extract tags directly and clearly supported by the text.
 2.  **Specificity**: Prefer specific entities (e.g., company names like "Apple", "Tesla"; stock tickers like "NVDA"), financial instruments (e.g., "ETFs", "bonds"), key economic indicators (e.g., "inflation", "interest rates"), and precise market concepts. Avoid overly broad terms.
-3.  **Quantity**: Aim for **at least 5 high-quality tags**. Brevity and impact are important. If the text doesn't contain enough relevant concepts for even 1-2 tags, provide as many as you can find. Do not invent or force tags.
+3.  **Quantity**: Aim for **at least 5 high-quality tags**. Brevity and impact are important. If the text doesn't contain enough relevant concepts for even 1-2 tags, provide at least 2 tags that is relevant to the news content. Do not invent or force tags.
 4.  **Format**: Tags should be concise, typically 1-3 words.
 
 Example Tags (illustrative, adapt to content):
@@ -113,16 +133,31 @@ Example Tags (illustrative, adapt to content):
 Text to process:
 ---TEXT_START---
 ${newsContent}
----TEXT_END---
-`;
+---TEXT_END---`,
+          },
+        ],
+      },
+    ];
 
-  try {
-    const result = await runnable.invoke(prompt);
-    // Ensure the number of tags does not exceed 5, though the prompt already guides this.
-    const limitedTags = Array.isArray(result.tags) ? result.tags.slice(0, 5) : [];
-    return limitedTags;
+    const response = await ai.models.generateContent({
+      model,
+      config,
+      contents,
+    });
+
+    if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+      try {
+        const result = JSON.parse(response.candidates[0].content.parts[0].text);
+        return Array.isArray(result.tags) ? result.tags : [];
+      } catch (parseError) {
+        console.error('Error parsing Gemini response:', parseError);
+        return [];
+      }
+    }
+    
+    return [];
   } catch (error) {
-    console.error('Error generating news tags with OpenAI:', error);
+    console.error('Error generating news tags with Gemini:', error);
     return [];
   }
 }

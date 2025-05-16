@@ -1,16 +1,29 @@
 import { createClient } from '@/utils/supabase/client';
-import { generateAudioTags } from '@/services/tag-generator';
-async function GetExistingPodcasts() {
-  const supabase = await createClient();
-  const { data: documents_transcribed } = await supabase
-    .from('documents_transcribed')
-    .select();
-  if (documents_transcribed) {
-    for (let doc of documents_transcribed) {
+import { generateNewsTags } from '@/services/tag-generator';
 
-        doc.metadata.tags = await generateAudioTags(doc.content);
+async function UpdateTags() {
+  const supabase = await createClient();
+  const { data: documents } = await supabase
+    .from('documents')
+    .select()
+    .contains('metadata', {source_type: 'news'})
+  console.log(documents);
+  if (documents) {
+    for (let doc of documents) {
+        console.log(doc.metadata.raw_data);
+        const tickers = doc.metadata.raw_data.ticker_sentiment.map((item: any) => item.ticker).join(',');
+        let input = `
+        news title:
+        ${doc.metadata.title}
+        news description: 
+        ${doc.content}
+        Related Tickers:
+         ${tickers}
+        `
+        console.log(`input: ${input}`);
+        doc.metadata.tags = await generateNewsTags(input);
         const { data, error } = await supabase
-          .from('documents_transcribed')
+          .from('documents')
           .update(doc)
           .eq('id', doc.id)
           .select();
@@ -18,4 +31,4 @@ async function GetExistingPodcasts() {
   }
 }
 
-GetExistingPodcasts();
+UpdateTags();
