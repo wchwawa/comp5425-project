@@ -2,7 +2,7 @@
 
 ## 🌐 Live Demo
 👉 [Click here to view the live site](https://comp5425-project.vercel.app)
-![CleanShot 2025-05-16 at 19 03 07@2x](https://github.com/user-attachments/assets/554f4dc1-74dc-4651-87d4-21fbe432b41a)
+![demo](./assets/demo-screenshot.png)
 
 ## 🛠️ Tech Stack
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
