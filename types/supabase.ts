@@ -11,85 +11,52 @@ export type Database = {
     Tables: {
       documents: {
         Row: {
-          chunk_index: number | null
           content: string | null
           created_at: string | null
           embedding: string | null
           id: string
           metadata: Json | null
-          raw_data: Json | null
-          source_type: string | null
-          source_url: string | null
-          tags: string[] | null
           title: string | null
         }
         Insert: {
-          chunk_index?: number | null
           content?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: string
           metadata?: Json | null
-          raw_data?: Json | null
-          source_type?: string | null
-          source_url?: string | null
-          tags?: string[] | null
           title?: string | null
         }
         Update: {
-          chunk_index?: number | null
           content?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: string
           metadata?: Json | null
-          raw_data?: Json | null
-          source_type?: string | null
-          source_url?: string | null
-          tags?: string[] | null
           title?: string | null
         }
         Relationships: []
       }
       documents_transcribed: {
         Row: {
-          chunk_index: number | null
           content: string | null
           created_at: string | null
           embedding: string | null
           id: string
           metadata: Json | null
-          raw_data: Json | null
-          source_type: string | null
-          source_url: string | null
-          tags: string[] | null
-          title: string | null
         }
         Insert: {
-          chunk_index?: number | null
           content?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: string
           metadata?: Json | null
-          raw_data?: Json | null
-          source_type?: string | null
-          source_url?: string | null
-          tags?: string[] | null
-          title?: string | null
         }
         Update: {
-          chunk_index?: number | null
           content?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: string
           metadata?: Json | null
-          raw_data?: Json | null
-          source_type?: string | null
-          source_url?: string | null
-          tags?: string[] | null
-          title?: string | null
         }
         Relationships: []
       }
