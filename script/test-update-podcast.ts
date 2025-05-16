@@ -6,11 +6,13 @@ async function UpdateTags() {
   const { data: documents } = await supabase
     .from('documents')
     .select()
-    .contains('metadata', {source_type: 'news'})
-  console.log(documents);
+    .contains('metadata', {source_type: "news"});
+  console.log(documents?.length);
   if (documents) {
     for (let doc of documents) {
-        console.log(doc.metadata.raw_data);
+        if (doc.metadata.tags.length <= 1 ) {
+        
+        
         const tickers = doc.metadata.raw_data.ticker_sentiment.map((item: any) => item.ticker).join(',');
         let input = `
         news title:
@@ -20,14 +22,16 @@ async function UpdateTags() {
         Related Tickers:
          ${tickers}
         `
-        console.log(`input: ${input}`);
-        doc.metadata.tags = await generateNewsTags(input);
-        const { data, error } = await supabase
-          .from('documents')
-          .update(doc)
-          .eq('id', doc.id)
-          .select();
+
+        // doc.metadata.tags = await generateNewsTags(input);
+        // const { data, error } = await supabase
+        //   .from('documents')
+        //   .update(doc)
+        //   .eq('id', doc.id)
+        //   .select();
+        console.log(doc.metadata.tags);
     }
+  }
   }
 }
 
