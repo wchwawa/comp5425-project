@@ -88,12 +88,15 @@ export async function rag(query: string, options = { limit: 3, tags: undefined a
   
   // retrieve related docs
   let vectorStore;
+  let docs;
+  
   if (options.source_type === 'podcast') {
     vectorStore = podcast_vectorStore;
+    docs = await vectorStore.similaritySearch(query, options.limit, filter);
   } else {
     vectorStore = news_vectorStore;
+    docs = await vectorStore.similaritySearch(query, options.limit, filter);
   }
-  const docs = await vectorStore.similaritySearch(query, options.limit, filter);
   
   // formatting docs as context
   const context = docs.map(doc => {

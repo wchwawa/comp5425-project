@@ -81,7 +81,7 @@ export async function generateNewsTags(newsContent: string | undefined): Promise
     tags: z.array(z.string()),
   });
   const llm = new ChatOpenAI({
-    model: "gpt-4.1-nano", // Consider gpt-3.5-turbo if cost/speed is a concern for shorter lists
+    model: "gpt-4.1-nano",
     temperature: 0.5,
   });
 
@@ -126,6 +126,7 @@ ${newsContent}
     return [];
   }
 }
+
 
 export async function generateTagsForQuery(query: string, source_type: string) : Promise<string[]> {
   const schema = z.object({

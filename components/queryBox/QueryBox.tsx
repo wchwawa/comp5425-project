@@ -96,7 +96,7 @@ export const QueryBox = () => {
       const newsResponse = await fetch('/api/fetchAlphavantageNews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ query, tickers: chartSymbol })
       });
 
       if (!newsResponse.ok) {
