@@ -57,7 +57,7 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
         <motion.div
           whileHover={{ scale: 1.03, filter: 'brightness(1.1)' }}
           transition={{ duration: 0.2 }}
-          className="relative w-full aspect-square bg-gray-800/80 rounded-lg overflow-hidden mb-4"
+          className="relative w-full aspect-square md:aspect-square bg-gray-800/80 rounded-lg overflow-hidden mb-4"
         >
           {imageUrl ? (
             <img
@@ -100,12 +100,12 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
         </motion.div>
 
         {/* Title and category */}
-        <div className="mb-3">
+        <div className="mb-2 md:mb-3">
           <div className="flex items-center gap-2">
             <motion.h3
               whileHover={{ scale: 1.02, color: '#a5b4fc' }}
               transition={{ duration: 0.2 }}
-              className="text-xl font-bold text-white"
+              className="text-lg md:text-xl font-bold text-white line-clamp-1"
             >
               {title}
             </motion.h3>
@@ -126,7 +126,7 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
         </div>
 
         {/* Author and upload time */}
-        <div className="mb-4 text-sm">
+        <div className="mb-3 md:mb-4 text-sm">
           {author && (
             <div className="flex items-center text-gray-400 mb-1">
               <svg
@@ -214,7 +214,7 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
       <div className="w-full md:w-3/5 p-4 flex flex-col space-y-4">
         {/* tags */}
         {tags && tags.length > 0 && (
-          <div>
+          <div className="md:block">
             <div className="text-xs uppercase text-gray-400 font-semibold mb-2 flex items-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -233,7 +233,7 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
               tag
             </div>
             <div className="flex flex-wrap gap-2">
-              {tags.map((tag, index) => (
+              {tags.slice(0, 3).map((tag, index) => (
                 <motion.span
                   key={index}
                   whileHover={{
@@ -247,6 +247,11 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
                   {tag}
                 </motion.span>
               ))}
+              {tags.length > 3 && (
+                <span className="text-xs text-gray-400 self-center hidden md:inline-block">
+                  +{tags.length - 3} more
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -263,9 +268,9 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-500 to-indigo-600 rounded-lg animate-border-flow"></div>
 
               {/* Solid background content container */}
-              <div className="relative rounded-lg bg-gray-900/95 p-4 h-full z-10">
+              <div className="relative rounded-lg bg-gray-900/95 p-2 md:p-4 h-full z-10">
                 {/* AI icon with pulse effect */}
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-2 md:top-3 right-2 md:right-3">
                   <div className="relative">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -286,14 +291,16 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
                 </div>
 
                 {/* Title with gradient text */}
-                <div className="mb-3 pb-2 border-b border-gray-800/50">
-                  <h4 className="text-sm font-semibold uppercase text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400">
+                <div className="mb-2 md:mb-3 pb-1 md:pb-2 border-b border-gray-800/50">
+                  <h4 className="text-xs md:text-sm font-semibold uppercase text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400">
                     AI Analysis{' '}
                   </h4>
                 </div>
 
                 {/* Content */}
-                <div className="text-gray-300">{aiSummary}</div>
+                <div className="text-gray-300 text-sm md:text-base line-clamp-3 md:line-clamp-none">
+                  {aiSummary}
+                </div>
               </div>
             </motion.div>
           </div>
@@ -301,40 +308,94 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
 
         {/* Podcast Description */}
         {description && (
-          <div>
-            <div className="text-xs uppercase text-gray-400 font-semibold mb-2 flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          <div className="block">
+            <div className="text-xs uppercase text-gray-400 font-semibold mb-2 flex items-center justify-between">
+              <div className="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span className="md:inline">PodCast Description</span>
+                <span className="inline md:hidden">Description</span>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.05, color: '#a5b4fc' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center transition-colors focus:outline-none md:hidden"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              PodCast Description
+                {isDescriptionExpanded ? (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-3 w-3 mr-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 15l7-7 7 7"
+                      />
+                    </svg>
+                    <span>Collapse</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-3 w-3 mr-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                    <span>Expand</span>
+                  </>
+                )}
+              </motion.button>
             </div>
             <div>
               <div className="text-gray-300 overflow-hidden">
-                {!isDescriptionExpanded && hasLongDescription ? (
-                  <p>{description.slice(0, descriptionLimit) + '...'}</p>
-                ) : (
-                  <motion.div
-                    initial={{ height: hasLongDescription ? '4.5rem' : 'auto' }}
-                    animate={{
-                      height: 'auto',
-                      transition: { duration: 0.5 }
-                    }}
-                    className="relative"
-                  >
-                    <p>{description}</p>
-                  </motion.div>
-                )}
+                <AnimatePresence>
+                  {!isDescriptionExpanded ? (
+                    <motion.div
+                      initial={{ height: 'auto' }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="line-clamp-1 md:line-clamp-none text-sm md:text-base"
+                    >
+                      <p>{description}</p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="text-sm md:text-base"
+                    >
+                      <p>{description}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {hasLongDescription && (
@@ -344,7 +405,7 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
                   onClick={() =>
                     setIsDescriptionExpanded(!isDescriptionExpanded)
                   }
-                  className="mt-1 text-xs text-indigo-400 hover:text-indigo-300 flex items-center transition-colors focus:outline-none"
+                  className="mt-1 text-xs text-indigo-400 hover:text-indigo-300 flex items-center transition-colors focus:outline-none hidden md:flex"
                 >
                   {isDescriptionExpanded ? (
                     <>

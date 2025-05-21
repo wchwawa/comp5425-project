@@ -312,13 +312,13 @@ const NewsCard = ({
                     borderColor: 'rgba(79, 70, 229, 0.5)'
                   }}
                   transition={{ duration: 0.2 }}
-                  className="px-1.5 py-0.5 bg-gray-800/80 text-gray-300 text-[0.6rem] rounded-full border border-gray-700/60"
+                  className="px-1.5 py-0.5 bg-gray-800/80 text-gray-300 text-xs rounded-full border border-gray-700/60"
                 >
                   {tag}
                 </motion.span>
               ))}
               {item.tags.length > 3 && (
-                <span className="text-[0.6rem] text-gray-400 self-center">
+                <span className="text-xs text-gray-400 self-center">
                   +{item.tags.length - 3} more
                 </span>
               )}

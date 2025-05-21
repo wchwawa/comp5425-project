@@ -131,7 +131,7 @@ export const QueryBox = () => {
     <div className="flex flex-col min-h-screen w-full text-white pb-6">
       {/* Search Bar - Moved to the top */}
       <div className="p-3 backdrop-blur-md shadow-md w-full sticky top-0 z-50">
-        <div className="flex gap-2 max-w-5xl mx-auto">
+        <div className="flex flex-col sm:flex-row gap-2 max-w-5xl mx-auto">
           <input
             type="text"
             placeholder="what's in your mind..."
@@ -145,17 +145,17 @@ export const QueryBox = () => {
             type="button"
             onClick={handleSearch}
             disabled={isLoading}
-            className="px-6 py-2 bg-indigo-700/80 text-white rounded-md hover:bg-indigo-600/80 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors duration-200 whitespace-nowrap backdrop-blur-sm"
+            className="px-4 sm:px-6 py-2 bg-indigo-700/80 text-white rounded-md hover:bg-indigo-600/80 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors duration-200 whitespace-nowrap backdrop-blur-sm w-full sm:w-auto"
           >
             {isLoading ? 'Searching...' : 'Search'}
           </button>
         </div>
       </div>
 
-      {/* Content Area - Full width, flex layout with fixed height and bottom padding */}
-      <div className="flex flex-grow overflow-hidden p-4 md:p-6 gap-4 md:gap-6 h-[calc(100vh-84px)] mb-5">
-        {/* Left Column (Podcast) - Takes full height */}
-        <div className="w-3/5 flex flex-col space-y-4 h-full">
+      {/* Content Area - Different layout for mobile vs desktop */}
+      <div className="md:flex md:flex-row md:flex-grow md:overflow-hidden p-4 md:p-6 gap-4 md:gap-6 md:h-[calc(100vh-84px)] mb-5">
+        {/* Desktop: Left Column (Podcast) | Mobile: First section */}
+        <div className="w-full md:w-3/5 flex flex-col space-y-4 md:h-full md:overflow-hidden mb-6 md:mb-0">
           {error && (
             <div className="py-3 px-4 bg-red-900/30 border border-red-800/50 text-red-300 rounded-xl backdrop-blur-md w-full">
               <div className="flex items-center">
@@ -202,10 +202,27 @@ export const QueryBox = () => {
             </motion.p>
           </div>
 
-          {/* Podcast Display Area - Make sure this scrollable container is below the sticky header */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar pt-1">
+          {/* Podcast Display Area */}
+          <div className="flex-1 md:overflow-y-auto custom-scrollbar pt-1 max-h-[850px] md:max-h-none overflow-y-auto relative">
             {' '}
-            {/* Added pt-1 to avoid overlap with sticky header */}
+            {/* 移动端滑动提示 - 仅在移动端显示 */}
+            <div className="absolute top-2 right-2 z-20 bg-indigo-900/70 text-indigo-200 text-xs py-1 px-2 rounded-full flex items-center border border-indigo-700/50 shadow-sm md:hidden animate-pulse">
+              <span>swipe left to see more </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3 w-3 ml-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
             {isLoading && !podcastDocuments.length ? (
               // loading animation
               <div className="flex flex-col items-center justify-center h-full backdrop-blur-md bg-black/30 rounded-xl border border-gray-800/50 w-full">
@@ -227,7 +244,7 @@ export const QueryBox = () => {
             ) : podcastDocuments.length > 0 ? (
               // search results - using PodcastCard
               <div
-                className="space-y-3 w-full pb-6"
+                className="md:space-y-3 w-full pb-6 overflow-x-auto flex flex-row md:flex-col md:items-stretch snap-x snap-mandatory custom-horizontal-scrollbar"
                 style={{
                   opacity: 1,
                   animation: 'fadeIn 0.5s ease-out'
@@ -236,7 +253,7 @@ export const QueryBox = () => {
                 {podcastDocuments.map((podcast, index) => (
                   <div
                     key={index}
-                    className="transform transition-all duration-300 hover:translate-x-1 w-full"
+                    className="transform transition-all duration-300 hover:translate-x-1 w-full md:w-full flex-shrink-0 min-w-[85%] pr-4 md:pr-0 md:pb-3 snap-start"
                     style={{
                       animationDelay: `${index * 150}ms`,
                       animation: 'slideIn 0.5s ease-out forwards'
@@ -272,19 +289,21 @@ export const QueryBox = () => {
             )}
           </div>
         </div>
-        {/* Right Column (News & Chart) - Two stacked cells with flexible heights */}
-        <div className="w-2/5 flex flex-col space-y-4 h-full">
+
+        {/* Desktop: Right Column (Chart & News) | Mobile: Second & Third sections */}
+        <div className="w-full md:w-2/5 flex flex-col space-y-4 md:h-full md:overflow-hidden">
           {/* Resizable TradingView Chart Widget */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 mb-6 md:mb-0">
             <ResizableChart
               stockSymbols={chartSymbol || []}
               initialHeight={250}
             />
           </div>
 
-          {/* News Display Area - Takes remaining height */}
-          <div className="flex-grow backdrop-blur-md bg-black/30 p-2 pb-4 rounded-xl border border-gray-800/50 shadow-md flex flex-col mb-2 overflow-hidden">
-            <div className="flex-grow overflow-hidden">
+          {/* News Display Area */}
+          <div className="flex-grow backdrop-blur-md bg-black/30 p-2 pb-4 rounded-xl border border-gray-800/50 shadow-md flex flex-col mb-10 md:mb-2 max-h-[350px] md:max-h-none md:overflow-auto relative">
+
+            <div className="flex-grow overflow-auto custom-scrollbar">
               <NewsDisplay
                 newsItems={newsItems}
                 isLoading={isNewsLoading}
@@ -312,6 +331,22 @@ export const QueryBox = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(99, 102, 241, 0.8); /* Darker Indigo-ish */
         }
+
+        .custom-horizontal-scrollbar::-webkit-scrollbar {
+          height: 4px;
+        }
+        .custom-horizontal-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 10px;
+        }
+        .custom-horizontal-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(129, 140, 248, 0.4);
+          border-radius: 10px;
+        }
+        .custom-horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(99, 102, 241, 0.6);
+        }
+
         /* 移除阻止滚动的样式 */
         /* body {
           overflow: hidden; 

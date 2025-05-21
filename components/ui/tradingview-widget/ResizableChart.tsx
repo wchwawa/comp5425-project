@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 import TradingViewSymbolOverviewChart from './TradingViewSimpleChartWidget';
@@ -17,6 +17,19 @@ const ResizableChart: React.FC<ResizableChartProps> = ({
 }) => {
   const [height, setHeight] = useState(initialHeight);
   const [isResizing, setIsResizing] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 检测是否为移动设备
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleResize = (
     event: React.SyntheticEvent,
@@ -52,15 +65,16 @@ const ResizableChart: React.FC<ResizableChartProps> = ({
         >
           {stockSymbols && stockSymbols.length > 0
             ? `Getting ${stockSymbols.length} ${stockSymbols.length === 1 ? 'symbol' : 'symbols'} charts`
-            : 'No symbols selected'} by analysing your query
+            : 'No symbols selected'}{' '}
+          by analysing your query
         </motion.p>
       </div>
 
       <ResizableBox
         width={Infinity}
         height={height}
-        minConstraints={[100, 150]}
-        maxConstraints={[Infinity, 600]}
+        minConstraints={[100, isMobile ? 280 : 150]}
+        maxConstraints={[Infinity, isMobile ? 420 : 600]}
         resizeHandles={['s']}
         handle={
           <div className="custom-handle w-full h-6 absolute -bottom-1 cursor-row-resize z-10 flex items-center justify-center">
@@ -88,6 +102,18 @@ const ResizableChart: React.FC<ResizableChartProps> = ({
           </div>
         </div>
       </ResizableBox>
+
+      {/* 移动端的样式调整 */}
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          .react-resizable-handle {
+            visibility: ${isMobile ? 'hidden' : 'visible'};
+          }
+          .custom-handle {
+            display: ${isMobile ? 'none' : 'flex'};
+          }
+        }
+      `}</style>
     </div>
   );
 };
