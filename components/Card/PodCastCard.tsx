@@ -326,7 +326,6 @@ export const PodcastCard = ({ podcast, query }: PodcastCardProps) => {
                   />
                 </svg>
                 <span className="md:inline">PodCast Description</span>
-                <span className="inline md:hidden">Description</span>
               </div>
               <motion.button
                 whileHover={{ scale: 1.05, color: '#a5b4fc' }}

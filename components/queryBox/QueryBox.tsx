@@ -302,7 +302,6 @@ export const QueryBox = () => {
 
           {/* News Display Area */}
           <div className="flex-grow backdrop-blur-md bg-black/30 p-2 pb-4 rounded-xl border border-gray-800/50 shadow-md flex flex-col mb-10 md:mb-2 max-h-[350px] md:max-h-none md:overflow-auto relative">
-
             <div className="flex-grow overflow-auto custom-scrollbar">
               <NewsDisplay
                 newsItems={newsItems}
